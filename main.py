@@ -1,3 +1,4 @@
+from tkinter import N
 import secret
 from localization import local
 
@@ -9,7 +10,7 @@ import mysql.connector
 
 if __name__ == "__main__":
     
-    global db_connector, users, games, requests
+    global db_connector, users, referees, team_reps, games, requests
 
     bot = telebot.TeleBot(secret.tg_bot_key)
 
@@ -31,7 +32,7 @@ if __name__ == "__main__":
         def get_all(obj):
 
             cur = db_connector.cursor()
-            cur.execute("SELECT tg_id, is_logged_in, first_name, referee_core_db_id, staff_core_db_id FROM goukv_ukv.referee_bot_users")
+            cur.execute("SELECT tg_id, is_logged_in, referee_core_db_id, staff_core_db_id, messages_ids FROM goukv_ukv.referee_bot_users")
             
             users = []
             
@@ -39,55 +40,101 @@ if __name__ == "__main__":
                 users.append(IUser({
                     "tg_id": user[0], 
                     "is_logged_in": user[1],
-                    "first_name": user[2],
-                    "referee_core_db_id": user[3],
-                    "staff_core_db_id": user[4]
+                    "referee_core_db_id": user[2],
+                    "staff_core_db_id": user[3],
+                    "messages_ids": user[4]
                     }))
 
             return users
 
-        def __init__(self, init_values) -> None:
+        @classmethod
+        def register_new(obj, tg_id):
+            
+            new_user = IUser({
+                "tg_id": tg_id,
+                "is_logged_in": 0,
+                "referee_core_db_id": 0,
+                "staff_core_db_id": 0,
+                "messages_ids": ";"
+                })
+
+            users.append(new_user)
+
+            cur = db_connector.cursor()
+            cur.execute(f"INSERT INTO `goukv_ukv`.`referee_bot_users` (`tg_id`, `is_logged_in`, `referee_core_db_id`, `staff_core_db_id`, `messages_ids`) VALUES ({tg_id}, 0, 0, 0, ';');")
+
+            return new_user
+
+        def _receive_button_press_from_user_(self, callback_data):
+            pass
+
+        def _receive_message_from_user_(self, message):
+            
+            if hasattr(self, "waiting_for_password") and self.waiting_for_password:
+                self.receive_password(message.text)   
+
+            bot.delete_message(self.tg_id, message.id)
+
+
+        def _send_message_to_user_(self, message, keyboard=None, clear_previous=False):
+            
+            if clear_previous:
+                self._clear_messages_()
+
+            message = bot.send_message(self.tg_id, message, reply_markup=keyboard)
+        
+            self._add_message_to_history(message)
+
+        def _add_message_to_history(self, message):
+            
+            self.messages_ids += f"{message.id};"
+
+            cur = db_connector.cursor()
+            cur.execute(f"UPDATE `goukv_ukv`.`referee_bot_users` SET messages_ids = concat(messages_ids, '{message.id};') WHERE tg_id = {self.tg_id};")
+
+        def _clear_messages_(self):
+            
+            for message_id in self.messages_ids.split(';'):
+                if message_id:
+                    try:
+                        bot.delete_message(self.tg_id, int(message_id))
+                    except:
+                        pass
+
+            self.messages_ids = ";"
+            
+            cur = db_connector.cursor()
+            cur.execute(f"UPDATE `goukv_ukv`.`referee_bot_users` SET messages_ids = ';';")
+
+        def __init__(self, init_values):
             
             for key, value in init_values.items():
                 setattr(self, key, value)
 
-        @classmethod
-        def register_new(obj):
-            pass
-
         def show_main_menu(self):
             pass
 
-        def _send_message_to_user_(self, message, keyboard=None):
-            bot.send_message(self.tg_id, message, reply_markup=keyboard)
-
-        def clear_messages(self):
-            pass
-
-        def propose_log_in(self):
-
-            log_in_as_referee_button = types.InlineKeyboardButton(local["log_in_as_referee_button_text"], callback_data="login as referee")
-            log_in_as_representitive_button = types.InlineKeyboardButton(local["log_in_as_representitive_button_text"], callback_data="login as representitive")
-
-            layout = ((log_in_as_referee_button,), (log_in_as_representitive_button,))
-            login_keyboard = types.InlineKeyboardMarkup(layout)
+        def invite_to_log_in(self):
             
-            print('here')
-
-            self._send_message_to_user_(local["proposition_to_log_in"], login_keyboard)
-
-        def try_log_in(self):
+            self._send_message_to_user_(local["proposition_to_log_in"], clear_previous=True)
+            self.waiting_for_password = True
+                    
+        def receive_password(self, password):
+            print(password.text)
+                
+        def log_in(self):
             pass
 
         def log_out(self):
             pass
 
-    class IReferee(IUser):
-        
+        # /// REFEREE FUNCTIONS
 
-        def try_log_in(self):
-            
-            super().try_authorize()
+        def register_as_referee(self):
+            pass
+
+        def register_as_team_representitive(self):
+            pass
 
         def receive_request(self):
             pass
@@ -113,11 +160,7 @@ if __name__ == "__main__":
         def get_request_edited(self):
             pass
 
-    class ITeamRepresentitive(IUser):
-        
-        def try_log_in(self):
-            
-            super().try_authorize()
+        # /// TEAM REPRESENTITIVE FUNTIONS
 
         def see_referees_list(self):
             pass
@@ -152,11 +195,30 @@ if __name__ == "__main__":
         def receive_withdrawal_of_the_acceptance(self):
             pass
 
-    class IGame:
+    '''class IReferee(IUser):
         
-        @classmethod
         def get_all(obj):
-            pass
+            
+            for user in users:
+                if user.referee_core_db_id != 0:
+                    
+                    cur = db_connector.cursor()
+                    cur.execute(f"SELECT firstname, classic_voleyball_category FROM goukv_ukv.jos_joomleague_referees WHERE id = {user.referee_core_db_id};")
+
+                    res = cur.fetchone()
+
+                    referees.append({
+                        "tg_id": user.tg_id,
+                        "is_logged_in": user[1],
+                        "referee_core_db_id": user[2],
+                        "staff_core_db_id": user[3],
+                        "messages_ids": user[4]
+                        "first_name": res[0],
+                        "category_classic": res[1]
+                    })
+
+            return referees'''
+
 
     class IRequest:
         
@@ -182,25 +244,42 @@ if __name__ == "__main__":
     db_connector = get_db_connector()
 
     users = IUser.get_all()
-    #games = IGame.get_all()
-    #requests = IRequest.get_all()
+    requests = IRequest.get_all()
 
     @bot.message_handler(commands=['start'])
     def start_message(message):
+
+        user = None
+
+        for user_count in users:
+            
+            if user_count.tg_id == message.from_user.id:
+                user = user_count
+                break
+
+        if user is None: user = IUser.register_new(message.from_user.id)
+
+        user._add_message_to_history(message)
+
+        if user.is_logged_in:
+            pass
+        else:
+            user.invite_to_log_in()
+
+    @bot.message_handler(func=lambda message:True, content_types=["text", "photo", "audio", "voice", "video", "document"])
+    def message_receive_workaround(message):
         
         for user in users:
-            #if user.tg_id == message.from_user.id:
-            if user.tg_id == 333119884:
-                if user.is_logged_in:
-                    if user.referee_core_db_id != 0:
-                        return 
-                    if user.staff_core_db_id != 0:
-                        return
-                else:            
-                    user.propose_log_in()
-                    return
+            if user.tg_id == message.from_user.id:
+                user._receive_message_from_user_(message)
+    
+    @bot.callback_query_handler(func=lambda call:True)
+    def button_press_workaround(callback_data):
+        
+        for user in users:
+            if user.tg_id == callback_data.from_user_id:
+                bot.answer_callback_query(callback_data.id)
+                user._receive_button_press_from_user_(callback_data)
 
-        new_user = IUser.register_new()
-        new_user.propose_log_in()
-
-    start_message(None)
+    while True:
+        bot.infinity_polling()
