@@ -1,4 +1,3 @@
-from tkinter import N
 import secret
 from localization import local
 
@@ -75,7 +74,6 @@ if __name__ == "__main__":
 
             bot.delete_message(self.tg_id, message.id)
 
-
         def _send_message_to_user_(self, message, keyboard=None, clear_previous=False):
             
             if clear_previous:
@@ -120,21 +118,58 @@ if __name__ == "__main__":
             self.waiting_for_password = True
                     
         def receive_password(self, password):
-            print(password.text)
-                
+            
+            # MAKE REQUEST TO REFEREE DB
+            # CHANGE STATUS IF LEN(FETCHALL IS 1)
+            # MAKE REQUEST TO PLAYERS DB
+            # SAME
+
+            passed = False
+
+            cur = db_connector.cursor()
+
+            cur.execute(f"SELECT id FROM goukv_ukv.jos_joomleague_referees WHERE referee_bot_auth_token = '{password}'")
+
+            res = cur.fetchall()
+
+            if len(res) == 1:
+
+                passed = True 
+                cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET referee_core_db_id = {res[0][0]} WHERE tg_id = {self.tg_id}")
+                self.referee_core_db_id = res[0][0]
+
+            cur.execute(f"SELECT id FROM goukv_ukv.jos_joomleague_players WHERE referee_bot_auth_token = '{password}'")
+
+            res = cur.fetchall()
+
+            if len(res) == 1:
+
+                passed = True
+                cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET staff_core_db_id = {res[0][0]} WHERE tg_id = {self.tg_id}")
+                self.staff_core_db_id = res[0][0]
+
+            if passed:
+                self.log_in()
+
+            else:
+                self.fail_to_log_in()
+
+        def fail_to_log_in(self):
+            self._send_message_to_user_(local["failed_log_in"])
+
         def log_in(self):
-            pass
+            
+            self.is_logged_in = 1
+
+            cur = db_connector.cursor()
+            cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET is_logged_in = 1 WHERE tg_id = {self.tg_id}")
+
+            self.show_main_menu()
 
         def log_out(self):
             pass
 
         # /// REFEREE FUNCTIONS
-
-        def register_as_referee(self):
-            pass
-
-        def register_as_team_representitive(self):
-            pass
 
         def receive_request(self):
             pass
@@ -194,31 +229,6 @@ if __name__ == "__main__":
 
         def receive_withdrawal_of_the_acceptance(self):
             pass
-
-    '''class IReferee(IUser):
-        
-        def get_all(obj):
-            
-            for user in users:
-                if user.referee_core_db_id != 0:
-                    
-                    cur = db_connector.cursor()
-                    cur.execute(f"SELECT firstname, classic_voleyball_category FROM goukv_ukv.jos_joomleague_referees WHERE id = {user.referee_core_db_id};")
-
-                    res = cur.fetchone()
-
-                    referees.append({
-                        "tg_id": user.tg_id,
-                        "is_logged_in": user[1],
-                        "referee_core_db_id": user[2],
-                        "staff_core_db_id": user[3],
-                        "messages_ids": user[4]
-                        "first_name": res[0],
-                        "category_classic": res[1]
-                    })
-
-            return referees'''
-
 
     class IRequest:
         
