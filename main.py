@@ -110,7 +110,7 @@ if __name__ == "__main__":
                 setattr(self, key, value)
 
         def show_main_menu(self):
-            pass
+            print("this_is_a_main_menu")
 
         def invite_to_log_in(self):
             
@@ -160,6 +160,7 @@ if __name__ == "__main__":
         def log_in(self):
             
             self.is_logged_in = 1
+            self.waiting_for_password = True
 
             cur = db_connector.cursor()
             cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET is_logged_in = 1 WHERE tg_id = {self.tg_id}")
@@ -272,7 +273,7 @@ if __name__ == "__main__":
         user._add_message_to_history(message)
 
         if user.is_logged_in:
-            pass
+            user.show_main_menu()
         else:
             user.invite_to_log_in()
 
