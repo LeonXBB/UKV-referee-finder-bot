@@ -29,10 +29,10 @@ if __name__ == "__main__":
     class IUser:
 
         @classmethod
-        def get_all(obj):
+        def get_all(cls):
 
             cur = db_connector.cursor()
-            cur.execute("SELECT tg_id, is_logged_in, referee_core_db_id, staff_core_db_id, messages_ids FROM goukv_ukv.referee_bot_users")
+            cur.execute("SELECT tg_id, is_logged_in, referee_core_db_id, staff_core_db_id, messages_ids, trash_ignore FROM goukv_ukv.referee_bot_users")
             
             users = []
             
@@ -42,20 +42,22 @@ if __name__ == "__main__":
                     "is_logged_in": user[1],
                     "referee_core_db_id": user[2],
                     "staff_core_db_id": user[3],
-                    "messages_ids": user[4]
+                    "messages_ids": user[4],
+                    "trash_ignore": user[5]
                     }))
 
             return users
 
         @classmethod
-        def register_new(obj, tg_id):
+        def register_new(cls, tg_id):
             
             new_user = IUser({
                 "tg_id": tg_id,
                 "is_logged_in": 0,
                 "referee_core_db_id": 0,
                 "staff_core_db_id": 0,
-                "messages_ids": ";"
+                "messages_ids": ";",
+                "trash_ignore": 0
                 })
 
             users.append(new_user)
@@ -78,11 +80,14 @@ if __name__ == "__main__":
                 ref_id = callback_data.split('_')[1]
                 action = callback_data.split('_')[2]
 
-                getattr(self, f"start_{action}_referee")(ref_id)
+                getattr(self, f"start_{action}_referee")(int(ref_id))
+
+                self._send_message_to_user_(local["successfully_applied_changes"], clear_previous=True)
+                self.show_main_menu(False)
 
         def _receive_message_from_user_(self, message):
             
-            if hasattr(self, "waiting_for_password") and self.waiting_for_password:
+            if hasattr(self, "trash_ignore") and self.trash_ignore:
                 self.receive_password(message.text)   
 
             bot.delete_message(self.tg_id, message.id)
@@ -122,6 +127,53 @@ if __name__ == "__main__":
             for key, value in init_values.items():
                 setattr(self, key, value)
 
+        @classmethod
+        def make_relationships(cls):
+
+            for user in users:
+                for another_user in users:
+                    if user.tg_id != another_user.tg_id:
+                        
+                        if another_user.staff_core_db_id != 0 and user.referee_core_db_id != 0:
+
+                            cur = db_connector.cursor()
+                            cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_relationships WHERE staff_core_db_id = {another_user.staff_core_db_id} AND referee_core_db_id = {user.referee_core_db_id}")
+                            res = cur.fetchall()
+
+                            if len(res) == 0:
+
+                                cur.execute(f"INSERT INTO `goukv_ukv`.`referee_bot_relationships` (`staff_core_db_id`, `referee_core_db_id`, `relationship_level`) VALUES ({another_user.staff_core_db_id}, {user.referee_core_db_id}, 1);")
+
+                                cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_relationships WHERE staff_core_db_id = {another_user.staff_core_db_id} AND referee_core_db_id = {user.referee_core_db_id};")
+                                res = cur.fetchall()
+                                id = res[0][0]
+
+                                relationships.append(IRelationship({
+                                    "id": id, 
+                                    "staff_core_db_id": another_user.staff_core_db_id,
+                                    "referee_core_db_id": user.referee_core_db_id,
+                                    "relationship_level": 1}))
+
+                        if another_user.referee_core_db_id != 0 and user.staff_core_db_id != 0:
+
+                            cur = db_connector.cursor()
+                            cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_relationships WHERE staff_core_db_id = {user.staff_core_db_id} AND referee_core_db_id = {another_user.referee_core_db_id}")
+                            res = cur.fetchall()
+
+                            if len(res) == 0:
+
+                                cur.execute(f"INSERT INTO `goukv_ukv`.`referee_bot_relationships` (`staff_core_db_id`, `referee_core_db_id`, `relationship_level`) VALUES ({user.staff_core_db_id}, {another_user.referee_core_db_id}, 1);")
+
+                                cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_relationships WHERE staff_core_db_id = {user.staff_core_db_id} AND referee_core_db_id = {another_user.referee_core_db_id};")
+                                res = cur.fetchall()
+                                id = res[0][0]
+
+                                relationships.append(IRelationship({
+                                    "id": id, 
+                                    "staff_core_db_id": user.staff_core_db_id,
+                                    "referee_core_db_id": another_user.referee_core_db_id,
+                                    "relationship_level": 1}))
+
         def get_first_name(self):
 
             if self.referee_core_db_id != 0:
@@ -140,7 +192,7 @@ if __name__ == "__main__":
                 
                 return res[0][0]
 
-        def show_main_menu(self):
+        def show_main_menu(self, refresh_screen=True):
 
             name = self.get_first_name()
             welcome_message = local["main_menu"].format(name)
@@ -163,12 +215,15 @@ if __name__ == "__main__":
 
             keyboard_obj = types.InlineKeyboardMarkup(keyboard_layout)
 
-            self._send_message_to_user_(welcome_message, keyboard_obj, True)
+            self._send_message_to_user_(welcome_message, keyboard_obj, refresh_screen)
 
         def invite_to_log_in(self):
             
             self._send_message_to_user_(local["proposition_to_log_in"], clear_previous=True)
-            self.waiting_for_password = True
+            self.trash_ignore = 1
+
+            cur = db_connector.cursor()
+            cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET trash_ignore = 1 WHERE tg_id = {self.tg_id};")
                     
         def receive_password(self, password):
             
@@ -213,10 +268,12 @@ if __name__ == "__main__":
         def log_in(self):
             
             self.is_logged_in = 1
-            self.waiting_for_password = False
+            self.trash_ignore = 0
+
+            self.make_relationships()
 
             cur = db_connector.cursor()
-            cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET is_logged_in = 1 WHERE tg_id = {self.tg_id}")
+            cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET is_logged_in = 1, trash_ignore = 0 WHERE tg_id = {self.tg_id}")
 
             self.show_main_menu()
 
@@ -265,12 +322,13 @@ if __name__ == "__main__":
                     for relationship in relationships:
                         if relationship.staff_core_db_id == self.staff_core_db_id and relationship.referee_core_db_id == user.referee_core_db_id:
                             rel_level = relationship.relationship_level
+                            res_sign = (local["love_referee"] if rel_level == 2 else (local["dont_care_referee"] if rel_level == 1 else local["hate_referee"]))
 
                     cur = db_connector.cursor()
                     cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {user.referee_core_db_id}")
                     
                     res = cur.fetchall()
-                    name_string = res[0][0] + ", " + res[0][1]
+                    name_string = f"{res[0][0]}, {res[0][1]} ({res_sign})"
 
                     love_button = types.InlineKeyboardButton(local["love_referee"], callback_data=f"iaq-ref-id_{user.referee_core_db_id}_loving")
                     hate_button = types.InlineKeyboardButton(local["hate_referee"], callback_data=f"iaq-ref-id_{user.referee_core_db_id}_hating")
@@ -292,14 +350,32 @@ if __name__ == "__main__":
         def view_future_games_as_team_rep(self):
             pass
 
-        def start_loving_referee(self, ref_id):
-            print(f"loving referee with id {ref_id}!")
+        def start_loving_referee(self, ref_id): # TODO update requests as well
+            
+            for relation in relationships:
+                if relation.referee_core_db_id == ref_id and relation.staff_core_db_id == self.staff_core_db_id:
+                    relation.relationship_level = 2
+
+                cur = db_connector.cursor()
+                cur.execute(f"UPDATE goukv_ukv.referee_bot_relationships SET relationship_level = 2 WHERE id = {relation.id};")
 
         def start_hating_referee(self, ref_id):
-            print(f"hating referee with id {ref_id}!")
+
+            for relation in relationships:
+                if relation.referee_core_db_id == ref_id and relation.staff_core_db_id == self.staff_core_db_id:
+                    relation.relationship_level = 0
+
+            cur = db_connector.cursor()
+            cur.execute(f"UPDATE goukv_ukv.referee_bot_relationships SET relationship_level = 0 WHERE id = {relation.id};")
 
         def start_notcaring_referee(self, ref_id):
-            print(f"not caring about referee with id {ref_id}!")
+
+            for relation in relationships:
+                if ((relation.referee_core_db_id == ref_id) and (relation.staff_core_db_id == self.staff_core_db_id)):
+                    relation.relationship_level = 1
+
+            cur = db_connector.cursor()
+            cur.execute(f"UPDATE goukv_ukv.referee_bot_relationships SET relationship_level = 1 WHERE id = {relation.id};")
 
         def start_forming_request(self):
             pass
@@ -325,18 +401,19 @@ if __name__ == "__main__":
     class IRelationship:
 
         @classmethod
-        def get_all(obj):
+        def get_all(cls):
         
             cur = db_connector.cursor()
-            cur.execute("SELECT staff_core_db_id, referee_core_db_id, relationship_level FROM goukv_ukv.referee_bot_relationships")
+            cur.execute("SELECT id, staff_core_db_id, referee_core_db_id, relationship_level FROM goukv_ukv.referee_bot_relationships")
             
             relationships = []
             
             for relationship in cur.fetchall():
                 relationships.append(IRelationship({
-                    "staff_core_db_id": relationship[0], 
-                    "referee_core_db_id": relationship[1],
-                    "relationship_level": relationship[2]
+                    "id": relationship[0],
+                    "staff_core_db_id": relationship[1], 
+                    "referee_core_db_id": relationship[2],
+                    "relationship_level": relationship[3]
                     }))
 
             return relationships
@@ -349,7 +426,7 @@ if __name__ == "__main__":
     class IRequest:
         
         @classmethod
-        def get_all(obj):
+        def get_all(cls):
             pass
 
         def get_sent(self):

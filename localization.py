@@ -7,7 +7,8 @@ local = {
     "log_out_button": "Вийти з акаунту",
     "see_referees_list_button": "Переглянути список рефері",
     "see_my_team_future_games_button": "Переглянути майбутні матчі своєї команди", # TODO figure out what to do if there are multiple teams
-    "love_referee": "♥",
-    "hate_referee": "X",
-    "dont_care_referee": "="
+    "love_referee": "+",
+    "hate_referee": "-",
+    "dont_care_referee": "=",
+    "successfully_applied_changes": "Зміни успішно збережені"
 }
