@@ -1,3 +1,4 @@
+from tkinter.tix import Tree
 import secret
 from localization import local
 
@@ -65,7 +66,19 @@ if __name__ == "__main__":
             return new_user
 
         def _receive_button_press_from_user_(self, callback_data):
-            pass
+            
+            if callback_data == "log_out":
+                self.log_out()
+
+            elif callback_data == "see_referees":
+                self.see_referees_list()
+
+            elif callback_data.startswith("iaq-ref-id"):
+
+                ref_id = callback_data.split('_')[1]
+                action = callback_data.split('_')[2]
+
+                getattr(self, f"start_{action}_referee")(ref_id)
 
         def _receive_message_from_user_(self, message):
             
@@ -109,8 +122,48 @@ if __name__ == "__main__":
             for key, value in init_values.items():
                 setattr(self, key, value)
 
+        def get_first_name(self):
+
+            if self.referee_core_db_id != 0:
+                
+                cur = db_connector.cursor()
+                cur.execute(f"SELECT firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {self.referee_core_db_id};")
+                res = cur.fetchall()
+                
+                return res[0][0]
+
+            if self.staff_core_db_id != 0:
+                
+                cur = db_connector.cursor()
+                cur.execute(f"SELECT firstname FROM goukv_ukv.jos_joomleague_players WHERE id = {self.staff_core_db_id};")
+                res = cur.fetchall()
+                
+                return res[0][0]
+
         def show_main_menu(self):
-            print("this_is_a_main_menu")
+
+            name = self.get_first_name()
+            welcome_message = local["main_menu"].format(name)
+
+            keyboard_layout = []
+
+            if self.referee_core_db_id != 0:
+                pass
+
+            if self.staff_core_db_id == 0:
+                
+                see_my_team_future_games_button = types.InlineKeyboardButton(local["see_my_team_future_games_button"], callback_data="see_my_team_future_games")
+                see_referees_list_button = types.InlineKeyboardButton(local["see_referees_list_button"], callback_data="see_referees")
+
+                keyboard_layout.append((see_my_team_future_games_button,))
+                keyboard_layout.append((see_referees_list_button,))
+
+            log_out_button = types.InlineKeyboardButton(local["log_out_button"], callback_data="log_out")
+            keyboard_layout.append((log_out_button,))
+
+            keyboard_obj = types.InlineKeyboardMarkup(keyboard_layout)
+
+            self._send_message_to_user_(welcome_message, keyboard_obj, True)
 
         def invite_to_log_in(self):
             
@@ -132,7 +185,7 @@ if __name__ == "__main__":
 
             res = cur.fetchall()
 
-            if len(res) == 1:
+            if len(res) > 0 and res[0]:
 
                 passed = True 
                 cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET referee_core_db_id = {res[0][0]} WHERE tg_id = {self.tg_id}")
@@ -142,7 +195,7 @@ if __name__ == "__main__":
 
             res = cur.fetchall()
 
-            if len(res) == 1:
+            if len(res) > 0 and res[0]:
 
                 passed = True
                 cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET staff_core_db_id = {res[0][0]} WHERE tg_id = {self.tg_id}")
@@ -160,7 +213,7 @@ if __name__ == "__main__":
         def log_in(self):
             
             self.is_logged_in = 1
-            self.waiting_for_password = True
+            self.waiting_for_password = False
 
             cur = db_connector.cursor()
             cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET is_logged_in = 1 WHERE tg_id = {self.tg_id}")
@@ -168,7 +221,13 @@ if __name__ == "__main__":
             self.show_main_menu()
 
         def log_out(self):
-            pass
+            
+            self.is_logged_in = 0
+
+            cur = db_connector.cursor()
+            cur.execute(f"UPDATE goukv_ukv.referee_bot_users SET is_logged_in = 0 WHERE tg_id = {self.tg_id};")
+
+            self.invite_to_log_in()
 
         # /// REFEREE FUNCTIONS
 
@@ -190,7 +249,7 @@ if __name__ == "__main__":
         def get_acceptance_approved(self):
             pass
 
-        def view_future_games(self):
+        def view_future_games_as_referee(self):
             pass
 
         def get_request_edited(self):
@@ -199,16 +258,48 @@ if __name__ == "__main__":
         # /// TEAM REPRESENTITIVE FUNTIONS
 
         def see_referees_list(self):
-            pass
-        
-        def view_future_games(self):
+            
+            for user in users:
+                if user.referee_core_db_id != 0:
+                    
+                    for relationship in relationships:
+                        if relationship.staff_core_db_id == self.staff_core_db_id and relationship.referee_core_db_id == user.referee_core_db_id:
+                            rel_level = relationship.relationship_level
+
+                    cur = db_connector.cursor()
+                    cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {user.referee_core_db_id}")
+                    
+                    res = cur.fetchall()
+                    name_string = res[0][0] + ", " + res[0][1]
+
+                    love_button = types.InlineKeyboardButton(local["love_referee"], callback_data=f"iaq-ref-id_{user.referee_core_db_id}_loving")
+                    hate_button = types.InlineKeyboardButton(local["hate_referee"], callback_data=f"iaq-ref-id_{user.referee_core_db_id}_hating")
+                    neutral_button = types.InlineKeyboardButton(local["dont_care_referee"], callback_data=f"iaq-ref-id_{user.referee_core_db_id}_notcaring")
+
+                    keyboard_layout = [[]]
+
+                    if rel_level != 0:
+                        keyboard_layout[0].append(hate_button)                        
+                    if rel_level != 1:
+                        keyboard_layout[0].append(neutral_button)  
+                    if rel_level != 2:
+                        keyboard_layout[0].append(love_button)  
+
+                    keyboard_obj = types.InlineKeyboardMarkup(keyboard_layout)
+
+                    self._send_message_to_user_(name_string, keyboard_obj)
+
+        def view_future_games_as_team_rep(self):
             pass
 
-        def start_loving_referee(self):
-            pass
+        def start_loving_referee(self, ref_id):
+            print(f"loving referee with id {ref_id}!")
 
-        def start_hating_referee(self):
-            pass
+        def start_hating_referee(self, ref_id):
+            print(f"hating referee with id {ref_id}!")
+
+        def start_notcaring_referee(self, ref_id):
+            print(f"not caring about referee with id {ref_id}!")
 
         def start_forming_request(self):
             pass
@@ -230,6 +321,30 @@ if __name__ == "__main__":
 
         def receive_withdrawal_of_the_acceptance(self):
             pass
+
+    class IRelationship:
+
+        @classmethod
+        def get_all(obj):
+        
+            cur = db_connector.cursor()
+            cur.execute("SELECT staff_core_db_id, referee_core_db_id, relationship_level FROM goukv_ukv.referee_bot_relationships")
+            
+            relationships = []
+            
+            for relationship in cur.fetchall():
+                relationships.append(IRelationship({
+                    "staff_core_db_id": relationship[0], 
+                    "referee_core_db_id": relationship[1],
+                    "relationship_level": relationship[2]
+                    }))
+
+            return relationships
+
+        def __init__(self, init_values) -> None:
+            
+            for key, value in init_values.items():
+                setattr(self, key, value)
 
     class IRequest:
         
@@ -255,6 +370,7 @@ if __name__ == "__main__":
     db_connector = get_db_connector()
 
     users = IUser.get_all()
+    relationships = IRelationship.get_all()
     requests = IRequest.get_all()
 
     @bot.message_handler(commands=['start'])
@@ -288,9 +404,12 @@ if __name__ == "__main__":
     def button_press_workaround(callback_data):
         
         for user in users:
-            if user.tg_id == callback_data.from_user_id:
-                bot.answer_callback_query(callback_data.id)
-                user._receive_button_press_from_user_(callback_data)
+            if user.tg_id == callback_data.from_user.id:
+
+                if not callback_data.data.startswith('iaq'):
+                    bot.answer_callback_query(callback_data.id)
+
+                user._receive_button_press_from_user_(callback_data.data)
 
     while True:
         bot.infinity_polling()
