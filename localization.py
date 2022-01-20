@@ -10,5 +10,12 @@ local = {
     "love_referee": "+",
     "hate_referee": "-",
     "dont_care_referee": "=",
-    "successfully_applied_changes": "Зміни успішно збережені"
+    "successfully_applied_changes": "Зміни успішно збережені",
+    "return_to_main_menu_text": "Натисність, щоб повернутися до головного меню",
+    "return_to_main_menu_button": "Повернутися",
+    "match_template": "\n     <b>{}</b> - <b>{}</b>     \n   <i>{}</i>   \n   <i>{}</i>",
+    "referee_not_found": "???",
+    "referees_titles": ("Перший суддя: {}", "Другий суддя: {}", "Секретар: {}"),
+    "look_for_referee_button": "Знайти суддю",
+    "cancel_agreement_button": "Скасувати домовленність"
 }
