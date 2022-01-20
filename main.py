@@ -348,7 +348,19 @@ if __name__ == "__main__":
                     self._send_message_to_user_(name_string, keyboard_obj)
 
         def view_future_games_as_team_rep(self):
-            pass
+            
+            cur = db_connector.cursor()
+            
+            teams = cur.fetchall()
+            for team in teams:
+
+                print(team)
+
+                cur.execute(f"SELECT id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE ((matchpart1 = {team[0]} OR matchpart2 = {team[1]}) AND (match_date > GETDATE()))")
+
+                matches = cur.fetchall()
+                for match in matches:
+                    print(match)
 
         def start_loving_referee(self, ref_id): # TODO update requests as well
             
