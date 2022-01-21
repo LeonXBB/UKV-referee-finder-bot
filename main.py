@@ -81,6 +81,23 @@ if __name__ == "__main__":
             elif callback_data == "see_my_team_future_games":
                 self.view_future_games_as_team_rep()
 
+            elif callback_data.startswith("lfr"):
+
+                self.forming_request = f"000_{callback_data}"
+                self.start_forming_request()
+
+            elif callback_data.startswith("rrc"):
+                self.forming_request = callback_data.split("_")[1] + self.forming_request[1:]
+                self.start_forming_request()
+
+            elif callback_data.startswith("rp"):
+                self.forming_request = self.forming_request[0] + callback_data.split("_")[1] + self.forming_request[2:]
+                self.start_forming_request()
+
+            elif callback_data.startswith("rt"):
+                self.forming_request = self.forming_request[:2] + callback_data.split("_")[1] + self.forming_request[3:]
+                self.start_forming_request()
+
             elif callback_data == "see_referees":
                 self.see_referees_list()
 
@@ -477,10 +494,41 @@ if __name__ == "__main__":
             cur.execute(f"UPDATE goukv_ukv.referee_bot_relationships SET relationship_level = 1 WHERE id = {relation.id};")
 
         def start_forming_request(self):
-            pass
+            
+            category_fourth_button = types.InlineKeyboardButton(local["categories_titles"][0], callback_data="rrc_0")
+            category_third_button = types.InlineKeyboardButton(local["categories_titles"][1], callback_data="rrc_1")
+            category_second_button = types.InlineKeyboardButton(local["categories_titles"][2], callback_data="rrc_2")
+            category_first_button = types.InlineKeyboardButton(local["categories_titles"][3], callback_data="rrc_3")
 
-        def update_request_form(self):
-            pass
+            no_transfer_button = types.InlineKeyboardButton(local["transfer_titles"][0], callback_data="rt_0")
+            transfer_button = types.InlineKeyboardButton(local["transfer_titles"][1], callback_data="rt_1")
+
+            regular_pay_button = types.InlineKeyboardButton(local["pay_titles"][0], callback_data="rp_0")
+            higher_pay_button = types.InlineKeyboardButton(local["pay_titles"][1], callback_data="rp_1")
+
+            send_request_button = types.InlineKeyboardButton(local["send_request"], callback_data="send_request")
+
+            category_row = []
+            for i, category_button in enumerate((category_fourth_button, category_third_button, category_second_button, category_first_button)):
+                if self.forming_request[0] != str(i):
+                    category_row.append(category_button)
+
+            transfer_row = []
+            for i, transfer_button in enumerate((no_transfer_button, transfer_button)):
+                if self.forming_request[2] != str(i):
+                    transfer_row.append(transfer_button)
+
+            pay_row = []
+            for i, pay_button in enumerate((regular_pay_button, higher_pay_button)):
+                if self.forming_request[1] != str(i):
+                    pay_row.append(pay_button)
+
+            keyboard_layout = (category_row, pay_row, transfer_row, (send_request_button,))
+            keyboard_obj = types.InlineKeyboardMarkup(keyboard_layout)
+
+            text = local["request_template"].format(local["categories_titles"][int(self.forming_request[0])], local["pay_titles"][int(self.forming_request[1])], local["transfer_titles"][int(self.forming_request[2])])
+
+            self._send_message_to_user_(text, keyboard_obj, True)
 
         def send_request(self):
             pass
@@ -492,6 +540,9 @@ if __name__ == "__main__":
             pass
 
         def decline_acceptance_of_a_request(self):
+            pass
+
+        def withdraw_acceptance(self):
             pass
 
         def receive_withdrawal_of_the_acceptance(self):

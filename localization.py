@@ -17,5 +17,10 @@ local = {
     "referee_not_found": "???",
     "referees_titles": ("Перший суддя: {}", "Другий суддя: {}", "Секретар: {}"),
     "look_for_referee_button": "Знайти суддю",
-    "cancel_agreement_button": "Скасувати домовленність"
+    "cancel_agreement_button": "Скасувати домовленність",
+    "request_template": "Мінімальна категорія: {}\nГонорар: {}\nТрансфер: {}",
+    "categories_titles": ("4 кат.", "3 кат.", "2 кат.", "1 кат."),
+    "pay_titles": ("Звичайний", "Підвищений"),
+    "transfer_titles": ("Відсутній", "Наявний"),
+    "send_request": "Надіслати запит"
 }
