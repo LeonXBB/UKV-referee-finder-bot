@@ -10,7 +10,7 @@ import time
 
 if __name__ == "__main__":
     
-    global db_connector, users, referees, team_reps, games, requests
+    global db_connector, users, referees, team_reps, games, requests, request_messages
 
     bot = telebot.TeleBot(secret.tg_bot_key)
 
@@ -75,6 +75,15 @@ if __name__ == "__main__":
             elif callback_data == "show_main_menu":
                 self.show_main_menu()
 
+            elif callback_data == "see_my_future_games":
+                self.view_future_games_as_referee()
+
+            elif callback_data.startswith("req_agree"):
+                self.accept_request(callback_data.split("_")[1])
+
+            elif callback_data.startswith("req_deny"):
+                self.deny_request(callback_data.split("_")[1])
+
             elif callback_data == "see_my_team_future_games":
                 self.view_future_games_as_team_rep()
 
@@ -82,6 +91,12 @@ if __name__ == "__main__":
 
                 self.forming_request = f"000_{callback_data}"
                 self.start_forming_request()
+
+            elif callback_data.startswith("cr"):
+                pass
+
+            elif callback_data.startswith("ca"):
+                pass
 
             elif callback_data.startswith("rrc"):
                 self.forming_request = callback_data.split("_")[1] + self.forming_request[1:]
@@ -118,7 +133,7 @@ if __name__ == "__main__":
 
             bot.delete_message(self.tg_id, message.id)
 
-        def _send_message_to_user_(self, message, keyboard=None, clear_previous=False, parse_mode="html"):
+        def _send_message_to_user_(self, message, keyboard=None, clear_previous=False, return_message=False, parse_mode="html"):
             
             if clear_previous:
                 self._clear_messages_()
@@ -126,6 +141,8 @@ if __name__ == "__main__":
             message = bot.send_message(self.tg_id, message, reply_markup=keyboard, parse_mode=parse_mode)
         
             self._add_message_to_history(message)
+
+            if return_message: return message
 
         def _add_message_to_history(self, message):
             
@@ -226,7 +243,10 @@ if __name__ == "__main__":
             keyboard_layout = []
 
             if self.referee_core_db_id != 0:
-                pass
+                
+                see_my_future_games_button = types.InlineKeyboardButton(local["see_my_future_games_button"], callback_data="see_my_future_games")
+
+                keyboard_layout.append((see_my_future_games_button,))
 
             if self.staff_core_db_id != 0:
                 
@@ -322,28 +342,120 @@ if __name__ == "__main__":
 
         # /// REFEREE FUNCTIONS
 
-        def receive_request(self):
-            pass
+        def view_future_games_as_referee(self):
+            
+            cur = db_connector.cursor()
+            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE (match_date > NOW()) AND (referee_id = {self.referee_core_db_id} OR referee_id2 = {self.referee_core_db_id} OR referee_id3 = {self.referee_core_db_id})")
+            matches = cur.fetchall()
 
-        def accept_request(self):
-            pass    
+            for match in matches:
 
-        def refuse_request(self):
-            pass
+                cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_teams WHERE id = {match[3]}")
+                try:
+                    match_team_name_one = cur.fetchall()[0][0]
+                except:
+                    match_team_name_one = ''
+                
+                cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_teams WHERE id = {match[4]}")
+                try: 
+                    match_team_name_two = cur.fetchall()[0][0]
+                except:
+                    match_team_name_two = ''
+
+                match_date_time = str(match[2]).replace('-', '.')[:-3]
+                
+                cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
+                try:
+                    match_court_address = cur.fetchall()[0][0]
+                except:
+                    match_court_address = ""
+
+                cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {match[5]}")
+                try:
+                    res = cur.fetchall()
+                    referee_one = f"{res[0][0]}, {res[0][1]}"
+                except:
+                    referee_one = local["referee_not_found"]
+                    
+                cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {match[6]}")
+                try:
+                    res = cur.fetchall()
+                    referee_two = f"{res[0][0]}, {res[0][1]}"
+                except:
+                    referee_two = local["referee_not_found"]
+
+                cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {match[7]}")
+                try:
+                    res = cur.fetchall()
+                    referee_three = f"{res[0][0]}, {res[0][1]}"                
+                except:
+                    referee_three = local["referee_not_found"]
+
+                self._send_message_to_user_(local["match_template_with_referees"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_one, referee_two, referee_three))
+
+            self._send_return_to_the_main_menu_keyboard_()
+
+        def receive_request(self, request):
+            
+            yes = types.InlineKeyboardButton(local["agree_to_request"], callback_data=f"req_agree_{request.id}")
+            no = types.InlineKeyboardButton(local["deny_request"], callback_data=f"req_deny_{request.id}")
+            yes_no_layout = ((yes, no),)
+            yes_no_keyboard = types.InlineKeyboardMarkup(yes_no_layout)
+
+            cur = db_connector.cursor()
+            cur.execute(f"SELECT matchpart1, matchpart2, playground_id, match_date FROM goukv_ukv.jos_joomleague_matches WHERE match_id = {request.match_id}")
+            res = cur.fetchall()
+            match_info = res[0]
+
+            cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {match_info[0]}")
+            res = cur.fetchall()
+            team_name_one = res[0][0]
+
+            cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {match_info[1]}")
+            res = cur.fetchall()
+            team_name_two = res[0][0]
+
+            cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_playgrounds WHERE id = {match_info[2]}")
+            res = cur.fetchall()
+            address = res[0][0]
+            
+            match_time = str(match_info[3])
+
+            mess = self._send_message_to_user_(local["match_request"].format(team_name_one, team_name_two, address, match_time), yes_no_keyboard, True, True)
+
+            cur.execute(f"INSERT INTO `goukv_ukv`.`referee_bot_request_messages` (`request_id`, `user_id`, `message_id`) VALUES ({request.id}, {self.tg_id}, {mess.id})")
+
+            cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {request.id} AND user_id = {self.tg_id} AND message_id = {mess.id}")
+            res = cur.fetchall()
+
+            request_messages.append(IRequestMessage({
+                "id": res[0][0],
+                "request_id": request.id,
+                "user_id": self.tg_id,
+                "message_id": mess.id
+            }))
+
+        def accept_request(self, request_id):
+                
+            for request in requests:
+                if request.id == request_id and request.status != 10:
+                    request.get_accepted(self.referee_core_db_id)
+                    self._send_message_to_user_(local["thank you"], clear_previous=True)
+                elif request.id == request_id and request.status == 10:
+                    self._send_message_to_user_(local["sorry_already_taken"], clear_previous=True)
+
+            self._send_return_to_the_main_menu_keyboard_()
+                
+        def deny_request(self, request_id):
+            self.show_main_menu()
         
         def withdrew_acceptance_of_request(self):
             pass
         
-        def get_acceptance_withdrawn(self):
+        def get_acceptance_declined(self):
             pass
 
         def get_acceptance_approved(self):
-            pass
-
-        def view_future_games_as_referee(self):
-            pass
-
-        def get_request_edited(self):
             pass
 
         # /// TEAM REPRESENTITIVE FUNTIONS
@@ -455,10 +567,16 @@ if __name__ == "__main__":
                 for i, referee in enumerate((referee_one, referee_two, referee_three)):
 
                     if referee == local["referee_not_found"]:
-                        button = types.InlineKeyboardButton(local["look_for_referee_button"], callback_data=f"lfr_{i}_{match[0]}")
-                    
+                        cur = db_connector.cursor()
+                        cur.execute(f"SELECT status FROM goukv_ukv.referee_bot_requests WHERE match_id = {match[0]} AND referee_index = {i}")
+                        res = cur.fetchall()
+                        if len(res) != 0 and res[0][0] != 10:
+                            button = types.InlineKeyboardButton(local["cancel_request_button"], callback_data=f"cr{i}_{match[0]}")
+                        else:
+                            button = types.InlineKeyboardButton(local["look_for_referee_button"], callback_data=f"lfr_{i}_{match[0]}")
+
                     else:
-                        button = types.InlineKeyboardButton(local["cancel_agreement_button"], callback_data=f"ca_{i}_{match[0]}")
+                            button = types.InlineKeyboardButton(local["cancel_agreement_button"], callback_data=f"ca_{i}_{match[0]}")
 
                     keyboard_obj = types.InlineKeyboardMarkup(((button,),))
 
@@ -543,7 +661,7 @@ if __name__ == "__main__":
             cur = db_connector.cursor()
             cur.execute(f"INSERT INTO `goukv_ukv`.`referee_bot_requests` (`made_by`, `made_at`, `match_id`, `status`, `referee_id`, `referee_index`, `category_min`, `pay`, `transfer`) VALUES ({self.staff_core_db_id}, CURRENT_TIMESTAMP(), {match_id}, 1, 0, {ref_index}, {ref_cat}, {pay}, {transfer})")
 
-            cur.execute(f"SELECT id, made_at, status, referee_id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match_id} AND ref_index = {ref_index}")
+            cur.execute(f"SELECT id, made_at, status, referee_id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match_id} AND referee_index = {ref_index}")
             res = cur.fetchall()
 
             requests.append(IRequest({
@@ -566,8 +684,35 @@ if __name__ == "__main__":
         def cancel_request(self):
             pass
 
-        def receive_acceptance_of_a_request(self):
-            pass
+        def receive_acceptance_of_a_request(self, request, referee):
+    
+            cur = db_connector.cursor()
+            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2 FROM goukv_ukv.jos_joomleague_matches WHERE match_id = {request.match_id})")
+            matches = cur.fetchall()
+
+            for match in matches:
+
+                cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_teams WHERE id = {match[3]}")
+                try:
+                    match_team_name_one = cur.fetchall()[0][0]
+                except:
+                    match_team_name_one = ''
+                
+                cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_teams WHERE id = {match[4]}")
+                try: 
+                    match_team_name_two = cur.fetchall()[0][0]
+                except:
+                    match_team_name_two = ''
+
+                match_date_time = str(match[2]).replace('-', '.')[:-3]
+                
+                cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
+                try:
+                    match_court_address = cur.fetchall()[0][0]
+                except:
+                    match_court_address = ""            
+
+            self._send_message_to_user_(local["match_template"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address))
 
         def decline_acceptance_of_a_request(self):
             pass
@@ -635,25 +780,100 @@ if __name__ == "__main__":
                 setattr(self, key, value)
 
         def get_sent(self):
-            pass
+            
+            cur = db_connector.cursor()
+            cur.execute(f"SELECT match_date FROM goukv_ukv.jos_joomleague_matches WHERE match_id = {self.match_id}")
 
-        def get_accepted(self):
-            pass
+            match_time =  time.mktime(cur.fetchall()[0][0].timetuple())
+            request_time = time.mktime(self.made_at.timetuple())
+            current_time = int(time.time())
 
-        def get_refused(self):
-            pass
+            # 2
+
+            for user in users:
+                if user.referee_core_db_id != 0: # check if is refeee
+                    cur.execute(f"SELECT relationship_level FROM goukv_ukv.referee_bot_relationships WHERE referee_core_db_id = {user.referee_core_db_id} AND staff_core_db_id = {self.made_by}") 
+                    res = cur.fetchall()
+
+                    if len(res) > 0 and res[0][0] == 2: # check status
+                        cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {self.id} AND user_id = {user.tg_id}")
+                        res = cur.fetchall()
+                        if len(res) == 0 or len(res[0]) == 0:
+                            if user.is_logged_in: 
+                                user.receive_request(self)
+            # 1
+
+            if current_time >= request_time + ((match_time - request_time) * 0.5):
+                for user in users:
+                    if user.referee_core_db_id != 0: # check if is refeee
+                        cur.execute(f"SELECT relationship_level FROM goukv_ukv.referee_bot_relationships WHERE referee_core_db_id = {user.referee_core_db_id} AND staff_core_db_id = {self.made_by}") 
+                        res = cur.fetchall()
+                        if len(res) > 0 and res[0][0] == 1: # check status
+                            cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {self.id} AND user_id = {user.tg_id}")
+                            res = cur.fetchall()
+                            if len(res) == 0 or len(res[0]) == 0:
+                                if user.is_logged_in: 
+                                    user.receive_request(self)            
+            # 0
+
+            if current_time >= request_time + ((match_time - request_time) * 0.75):
+                for user in users:
+                    if user.referee_core_db_id != 0: # check if is refeee
+                        cur.execute(f"SELECT relationship_level FROM goukv_ukv.referee_bot_relationships WHERE referee_core_db_id = {user.referee_core_db_id} AND staff_core_db_id = {self.made_by}") 
+                        res = cur.fetchall()
+                        if len(res) > 0 and res[0][0] == 0: # check status
+                            cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {self.id} AND user_id = {user.tg_id}")
+                            res = cur.fetchall()
+                            if len(res) == 0 and len(res[0]) == 0:
+                                if user.is_logged_in: 
+                                    user.receive_request(self)
 
         def get_cancelled(self):
             pass
 
+        def get_accepted(self, referee_id):
+            
+            cur = db_connector.cursor()
+            cur.execute(f"SELECT tg_id FROM goukv_ukv.referee_bot_users WHERE staff_core_db_id = {self.made_by}")
+            res = cur.fetchall()
+            
+            for user in users:
+                if user.tg_id == res[0][0]:
+                    user.receive_acceptance_of_a_request(self, referee_id)
+
         def get_withdrawn(self):
             pass
+
+    class IRequestMessage:
+
+        @classmethod
+        def get_all(cls):
+            cur = db_connector.cursor()
+            cur.execute("SELECT * FROM goukv_ukv.referee_bot_request_messages")
+
+            request_messages = []
+
+            for request_message in cur.fetchall():
+                request_messages.append(IRequestMessage({
+                    "id": request_message[0],
+                    "request_id": request_message[1],
+                    "user_id": request_message[2],
+                    "message_id": request_message[3]
+                }))
+            
+            return request_messages
+
+        def __init__(self, init_values) -> None:
+            
+            for key, value in init_values.items():
+                setattr(self, key, value)
 
     db_connector = get_db_connector()
 
     users = IUser.get_all()
     relationships = IRelationship.get_all()
     requests = IRequest.get_all()
+    request_messages = IRequestMessage.get_all()
 
     @bot.message_handler(commands=['start'])
     def start_message(message):
@@ -698,8 +918,12 @@ if __name__ == "__main__":
             bot.infinity_polling()
     
     def run_schedulers():
+        
+        time.sleep(20)
         while True:
-            pass
+            for request in requests:
+                if request.status != 0 and request.status != 10 and request.status != "0" and request.status != "10":
+                    request.get_sent()
 
     t1 = threading.Thread(target=run_bot)
     t2 = threading.Thread(target=run_schedulers)

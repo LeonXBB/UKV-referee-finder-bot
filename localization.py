@@ -14,6 +14,7 @@ local = {
     "return_to_main_menu_text": "Натисність, щоб повернутися до головного меню",
     "return_to_main_menu_button": "Повернутися",
     "match_template": "\n     <b>{}</b> - <b>{}</b>     \n   <i>{}</i>   \n   <i>{}</i>",
+    "match_template_with_referees": "\n     <b>{}</b> - <b>{}</b>     \n   <i>{}</i>   \n   <i>{}</i>\nПерший суддя: {}\nДругий суддя: {}\nСеккретар: {}",
     "referee_not_found": "???",
     "referees_titles": ("Перший суддя: {}", "Другий суддя: {}", "Секретар: {}"),
     "look_for_referee_button": "Знайти суддю",
@@ -23,5 +24,12 @@ local = {
     "pay_titles": ("Звичайний", "Підвищений"),
     "transfer_titles": ("Відсутній", "Наявний"),
     "send_request": "Надіслати запит",
-    "successfully_sent_request": "Запит надіслано. Ми повідомимо, коли хтось з суддів погодиться."
+    "successfully_sent_request": "Запит надіслано. Ми повідомимо, коли хтось з суддів погодиться.",
+    "match_request": "Пошук судді, матч {} - {}\n{}\{}",
+    "agree_to_request": "Погодитись",
+    "deny_request": "Відмовитись",
+    "cancel_request_button": "Скасувати запит",
+    "see_my_future_games_button": "Переглянути свої майбутні матчі",
+    "thank you": "Дякуємо! Інформація передана представнику команди для погодження",
+    "sorry_already_taken": "Вибачте, інший суддя вже погодився на цей запит."
 }
