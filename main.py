@@ -1,7 +1,3 @@
-from tkinter.messagebox import NO
-from tkinter.tix import Tree
-
-from numpy import mat
 import secret
 from localization import local
 
@@ -9,7 +5,8 @@ import telebot
 from telebot import types
 
 import mysql.connector
-
+import threading
+import time
 
 if __name__ == "__main__":
     
@@ -97,6 +94,9 @@ if __name__ == "__main__":
             elif callback_data.startswith("rt"):
                 self.forming_request = self.forming_request[:2] + callback_data.split("_")[1] + self.forming_request[3:]
                 self.start_forming_request()
+
+            elif callback_data == "send_request":
+                self.send_request(self.forming_request)
 
             elif callback_data == "see_referees":
                 self.see_referees_list()
@@ -530,8 +530,38 @@ if __name__ == "__main__":
 
             self._send_message_to_user_(text, keyboard_obj, True)
 
-        def send_request(self):
-            pass
+            self._send_return_to_the_main_menu_keyboard_()
+
+        def send_request(self, request_data):
+            
+            ref_cat = request_data[0]
+            pay = request_data[1]
+            transfer = request_data[2]
+            ref_index = request_data.split("_")[2]
+            match_id = request_data.split("_")[3]
+
+            cur = db_connector.cursor()
+            cur.execute(f"INSERT INTO `goukv_ukv`.`referee_bot_requests` (`made_by`, `made_at`, `match_id`, `status`, `referee_id`, `referee_index`, `category_min`, `pay`, `transfer`) VALUES ({self.staff_core_db_id}, CURRENT_TIMESTAMP(), {match_id}, 1, 0, {ref_index}, {ref_cat}, {pay}, {transfer})")
+
+            cur.execute(f"SELECT id, made_at, status, referee_id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match_id} AND ref_index = {ref_index}")
+            res = cur.fetchall()
+
+            requests.append(IRequest({
+                "id": res[0][0],
+                "made_by": self.staff_core_db_id,
+                "made_at": res[0][1],
+                "match_id": match_id,
+                "status": res[0][2],
+                "referee_id": res[0][3],
+                "referee_index": ref_index,
+                "category_min": ref_cat,
+                "pay": pay,
+                "transfer": transfer
+            }))
+            self.forming_request = ""
+
+            self._send_message_to_user_(local["successfully_sent_request"], clear_previous=True)
+            self._send_return_to_the_main_menu_keyboard_()
 
         def cancel_request(self):
             pass
@@ -577,7 +607,32 @@ if __name__ == "__main__":
         
         @classmethod
         def get_all(cls):
-            pass
+            
+            cur = db_connector.cursor()
+            cur.execute("SELECT * FROM goukv_ukv.referee_bot_requests")
+
+            requests = []
+
+            for request in cur.fetchall():
+                requests.append(IRequest({
+                    "id": request[0],
+                    "made_by": request[1],
+                    "made_at": request[2],
+                    "match_id": request[3],
+                    "status": request[4],
+                    "referee_id": request[5],
+                    "referee_index": request[6],
+                    "category_min": request[7],
+                    "pay": request[8],
+                    "transfer": request[9]
+                }))
+            
+            return requests
+
+        def __init__(self, init_values) -> None:
+            
+            for key, value in init_values.items():
+                setattr(self, key, value)
 
         def get_sent(self):
             pass
@@ -638,5 +693,16 @@ if __name__ == "__main__":
 
                 user._receive_button_press_from_user_(callback_data.data)
 
-    while True:
-        bot.infinity_polling()
+    def run_bot():
+        while True:
+            bot.infinity_polling()
+    
+    def run_schedulers():
+        while True:
+            pass
+
+    t1 = threading.Thread(target=run_bot)
+    t2 = threading.Thread(target=run_schedulers)
+
+    t1.start()
+    t2.start()
