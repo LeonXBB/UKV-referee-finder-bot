@@ -1,3 +1,4 @@
+import enum
 import secret
 from localization import local
 
@@ -513,7 +514,7 @@ if __name__ == "__main__":
 
                 for team_id in teams_ids:
                     
-                    cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE (matchpart1 = {team_id[0]} OR matchpart2 = {team_id[0]}) AND (match_date > NOW())")
+                    cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id[0]} AND match_date > NOW()")
 
                     matches = cur.fetchall()
             
@@ -592,6 +593,9 @@ if __name__ == "__main__":
 
                 cur = db_connector.cursor()
                 cur.execute(f"UPDATE goukv_ukv.referee_bot_relationships SET relationship_level = 2 WHERE id = {relation.id};")
+
+            for request in requests:
+                request.get_sent()
 
         def start_hating_referee(self, ref_id):
 
@@ -714,6 +718,8 @@ if __name__ == "__main__":
 
             self._send_message_to_user_(local["match_template"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address))
 
+        def accept_acceptance_of_a_request()
+
         def decline_acceptance_of_a_request(self):
             pass
 
@@ -788,45 +794,75 @@ if __name__ == "__main__":
             request_time = time.mktime(self.made_at.timetuple())
             current_time = int(time.time())
 
-            # 2
+            def is_not_self():
+                #return user.referee_core_db_id != self.made_by
+                return True
+
+            def is_referee():
+                return user.referee_core_db != 0
+
+            def is_correct_group(group_number):
+                cur.execute(f"SELECT relationship_level FROM goukv_ukv.referee_bot_relationships WHERE referee_core_db_id = {user.referee_core_db_id} AND staff_core_db_id = {self.made_by}") 
+                res = cur.fetchall()
+                return len(res) > 0 and res[0][0] == group_number
+
+            def is_correct_category():
+                cur.execute(f"SELECT classic_voleyball_category FROM goukv_ukv.jos_joomleague_referees WHERE id = {user.referee_core_db_id}")
+                res = cur.fetchall()
+                for i, category in enumerate(local["categories_titles"]):
+                    if res[0][0].startswith(category.split(".")[0]):
+                        return i >= self.category_min
+                return False
+
+            def is_not_previous_match_referee():
+                
+                cur = db_connector.cursor()
+                
+                cur.execute(f"SELECT matchpart1 FROM goukv_ukv.jos_joomleague_matches WHERE match_id = {self.match_id}")
+                res = cur.fetchall()
+                home_team_id = res[0][0]
+
+                cur.execute(f"SELECT referee_id FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {home_team_id} AND match_date < NOW() ORDER BY match_date DESC LIMIT 1")
+                res = cur.fetchall()
+                last_home_match = res[0][0]
+                return last_home_match == self.referee_id
+
+            def is_not_already_send():
+                cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {self.id} AND user_id = {user.tg_id}")
+                res = cur.fetchall()
+                return len(res) == 0 or len(res[0]) == 0
 
             for user in users:
-                if user.referee_core_db_id != 0: # check if is refeee
-                    cur.execute(f"SELECT relationship_level FROM goukv_ukv.referee_bot_relationships WHERE referee_core_db_id = {user.referee_core_db_id} AND staff_core_db_id = {self.made_by}") 
-                    res = cur.fetchall()
-
-                    if len(res) > 0 and res[0][0] == 2: # check status
-                        cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {self.id} AND user_id = {user.tg_id}")
-                        res = cur.fetchall()
-                        if len(res) == 0 or len(res[0]) == 0:
-                            if user.is_logged_in: 
-                                user.receive_request(self)
-            # 1
+                if is_not_self():
+                    if is_referee():
+                        if is_correct_group(2):
+                            if is_correct_category():
+                                if self.referee_index > 0 or is_not_previous_match_referee():
+                                    if is_not_already_send():
+                                        if user.is_logged_in: 
+                                            user.receive_request(self)
 
             if current_time >= request_time + ((match_time - request_time) * 0.5):
                 for user in users:
-                    if user.referee_core_db_id != 0: # check if is refeee
-                        cur.execute(f"SELECT relationship_level FROM goukv_ukv.referee_bot_relationships WHERE referee_core_db_id = {user.referee_core_db_id} AND staff_core_db_id = {self.made_by}") 
-                        res = cur.fetchall()
-                        if len(res) > 0 and res[0][0] == 1: # check status
-                            cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {self.id} AND user_id = {user.tg_id}")
-                            res = cur.fetchall()
-                            if len(res) == 0 or len(res[0]) == 0:
-                                if user.is_logged_in: 
-                                    user.receive_request(self)            
-            # 0
+                    if is_not_self():
+                        if is_referee():
+                            if is_correct_group(1):
+                                if is_correct_category():
+                                    if self.referee_index > 0 or is_not_previous_match_referee():
+                                        if is_not_already_send():
+                                            if user.is_logged_in: 
+                                                user.receive_request(self)
 
             if current_time >= request_time + ((match_time - request_time) * 0.75):
                 for user in users:
-                    if user.referee_core_db_id != 0: # check if is refeee
-                        cur.execute(f"SELECT relationship_level FROM goukv_ukv.referee_bot_relationships WHERE referee_core_db_id = {user.referee_core_db_id} AND staff_core_db_id = {self.made_by}") 
-                        res = cur.fetchall()
-                        if len(res) > 0 and res[0][0] == 0: # check status
-                            cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {self.id} AND user_id = {user.tg_id}")
-                            res = cur.fetchall()
-                            if len(res) == 0 and len(res[0]) == 0:
-                                if user.is_logged_in: 
-                                    user.receive_request(self)
+                     if is_not_self():
+                        if is_referee():
+                            if is_correct_group(0):
+                                if is_correct_category():
+                                    if self.referee_index > 0 or is_not_previous_match_referee():
+                                        if is_not_already_send():
+                                            if user.is_logged_in: 
+                                                user.receive_request(self)                                    
 
         def get_cancelled(self):
             pass
