@@ -86,7 +86,7 @@ if __name__ == "__main__":
                 self.deny_request(callback_data.split("_")[1])
 
             elif callback_data.startswith("see_my_team_future_games"):
-                team_id = callback_data.split("_")[1]
+                team_id = callback_data.split("_")[5]
                 self.view_future_games_as_team_rep(team_id)
 
             elif callback_data.startswith("lfr"):
@@ -259,9 +259,9 @@ if __name__ == "__main__":
                     team_buttons = []
 
                     cur = db_connector.cursor()
-                    cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {team_id}")
+                    cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {team_id[0]};")
                     res = cur.fetchall()
-                    team_buttons.append(types.InlineKeyboardButton(local["see_my_team_future_games_button"].format(res[0][0]), callback_data=f"see_my_team_future_games_{team_id}"))
+                    team_buttons.append([types.InlineKeyboardButton(local["see_my_team_future_games_button"].format(res[0][0]), callback_data=f"see_my_team_future_games_{team_id[0]}"),])
                 
                 see_referees_list_button = types.InlineKeyboardButton(local["see_referees_list_button"], callback_data="see_referees")
 
@@ -414,7 +414,7 @@ if __name__ == "__main__":
 
                 cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match[0]} AND referee_id = {self.referee_core_db_id} AND referee_index = {i}")
                 res = cur.fetchall()
-                if len(res) >= 0 and len(res[0]) > 0:
+                if len(res) > 0 and len(res[0]) > 0:
 
                     cancel_keyboard_button = types.InlineKeyboardButton(local["cancel_agreement_button"], callback_data=f"ca_{i}_{match[0]}")
                     cancel_keyboard_layout = ((cancel_keyboard_button,),)
@@ -502,6 +502,8 @@ if __name__ == "__main__":
                             rel_level = relationship.relationship_level
                             res_sign = (local["love_referee"] if rel_level == 2 else (local["dont_care_referee"] if rel_level == 1 else local["hate_referee"]))
 
+                    print(rel_level, res_sign)
+
                     cur = db_connector.cursor()
                     cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {user.referee_core_db_id}")
                     
@@ -547,7 +549,8 @@ if __name__ == "__main__":
         def view_future_games_as_team_rep(self, team_id):
 
             cur = db_connector.cursor()    
-            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id[0]} AND match_date > NOW()")
+            print(team_id)
+            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id} AND match_date > NOW()")
 
             matches = cur.fetchall()
             matches = list(set(matches))
@@ -832,7 +835,7 @@ if __name__ == "__main__":
                 return True
 
             def is_referee():
-                return user.referee_core_db != 0
+                return user.referee_core_db_id != 0
 
             def is_correct_group(group_number):
                 cur.execute(f"SELECT relationship_level FROM goukv_ukv.referee_bot_relationships WHERE referee_core_db_id = {user.referee_core_db_id} AND staff_core_db_id = {self.made_by}") 
@@ -988,7 +991,7 @@ if __name__ == "__main__":
     
     def run_schedulers():
         
-        time.sleep(20)
+        time.sleep(60)
         while True:
             for request in requests:
                 if request.status != 0 and request.status != 10 and request.status != "0" and request.status != "10":
