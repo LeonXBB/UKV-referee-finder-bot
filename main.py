@@ -85,8 +85,9 @@ if __name__ == "__main__":
             elif callback_data.startswith("req_deny"):
                 self.deny_request(callback_data.split("_")[1])
 
-            elif callback_data == "see_my_team_future_games":
-                self.view_future_games_as_team_rep()
+            elif callback_data.startswith("see_my_team_future_games"):
+                team_id = callback_data.split("_")[1]
+                self.view_future_games_as_team_rep(team_id)
 
             elif callback_data.startswith("lfr"):
 
@@ -251,10 +252,20 @@ if __name__ == "__main__":
 
             if self.staff_core_db_id != 0:
                 
-                see_my_team_future_games_button = types.InlineKeyboardButton(local["see_my_team_future_games_button"], callback_data="see_my_team_future_games")
+                self.teams_ids = self._get_teams_ids()
+
+                for team_id in self.teams_ids:
+
+                    team_buttons = []
+
+                    cur = db_connector.cursor()
+                    cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {team_id}")
+                    res = cur.fetchall()
+                    team_buttons.append(types.InlineKeyboardButton(local["see_my_team_future_games_button"].format(res[0][0]), callback_data=f"see_my_team_future_games_{team_id}"))
+                
                 see_referees_list_button = types.InlineKeyboardButton(local["see_referees_list_button"], callback_data="see_referees")
 
-                keyboard_layout.append((see_my_team_future_games_button,))
+                keyboard_layout.extend(team_buttons)
                 keyboard_layout.append((see_referees_list_button,))
 
             log_out_button = types.InlineKeyboardButton(local["log_out_button"], callback_data="log_out")
@@ -392,7 +403,24 @@ if __name__ == "__main__":
                 except:
                     referee_three = local["referee_not_found"]
 
-                self._send_message_to_user_(local["match_template_with_referees"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_one, referee_two, referee_three))
+                cancel_request_keyboard = None
+
+                i = 0
+
+                if match[6] == self.referee_core_db_id:
+                    i = 1
+                elif match[7] == self.referee_core_db_id:
+                    i = 2
+
+                cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match[0]} AND referee_id = {self.referee_core_db_id} AND referee_index = {i}")
+                res = cur.fetchall()
+                if len(res) >= 0 and len(res[0]) > 0:
+
+                    cancel_keyboard_button = types.InlineKeyboardButton(local["cancel_agreement_button"], callback_data=f"ca_{i}_{match[0]}")
+                    cancel_keyboard_layout = ((cancel_keyboard_button,),)
+                    cancel_request_keyboard = types.InlineKeyboardMarkup(cancel_keyboard_layout)
+                
+                self._send_message_to_user_(local["match_template_with_referees"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_one, referee_two, referee_three), cancel_request_keyboard)
 
             self._send_return_to_the_main_menu_keyboard_()
 
@@ -499,8 +527,10 @@ if __name__ == "__main__":
 
             self._send_return_to_the_main_menu_keyboard_()
 
-        def view_future_games_as_team_rep(self):
+        def _get_teams_ids(self):
             
+            rv = []
+
             cur = db_connector.cursor()
             
             cur.execute(f"SELECT projectteam_id FROM goukv_ukv.jos_joomleague_teamstaff_project WHERE person_id = {self.staff_core_db_id}")
@@ -510,14 +540,16 @@ if __name__ == "__main__":
             for project_team_id in project_teams_ids:
                 cur.execute(f"SELECT team_id FROM goukv_ukv.jos_joomleague_team_joomleague WHERE id = {project_team_id[0]}")
                 
-                teams_ids = cur.fetchall()
-
-                for team_id in teams_ids:
-                    
-                    cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id[0]} AND match_date > NOW()")
-
-                    matches = cur.fetchall()
+                rv.extend(cur.fetchall())
             
+            return rv
+            
+        def view_future_games_as_team_rep(self, team_id):
+
+            cur = db_connector.cursor()    
+            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id[0]} AND match_date > NOW()")
+
+            matches = cur.fetchall()
             matches = list(set(matches))
 
             for match in matches:
@@ -718,8 +750,9 @@ if __name__ == "__main__":
 
             self._send_message_to_user_(local["match_template"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address))
 
-        def accept_acceptance_of_a_request()
-
+        def accept_acceptance_of_a_request():
+            pass
+        
         def decline_acceptance_of_a_request(self):
             pass
 
