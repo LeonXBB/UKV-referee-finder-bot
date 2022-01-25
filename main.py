@@ -1095,7 +1095,7 @@ if __name__ == "__main__":
             current_time = int(time.time())
 
             def is_not_self():
-                return user.staff_core_db_id != self.made_by
+                return int(user.staff_core_db_id) != int(self.made_by)
 
             def is_referee():
                 return user.referee_core_db_id != 0
@@ -1285,10 +1285,13 @@ if __name__ == "__main__":
 
             self.status = 1
 
+            ref_index = "" if self.referee_index == 0 else '2'
+
             db_connector.reconnect()
             cur = db_connector.cursor()
             cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET status = 1 WHERE id = {self.id}")
             cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET referee_id = 0 WHERE id = {self.id}")
+            cur.execute(f"UPDATE goukv_ukv.jos_joomleague_matches SET referee_id{ref_index} = 0 WHERE match_id = {self.match_id}")
 
             for request_message in request_messages:
                 if request_message.request_id == self.id: # TODO maybe ignore former referee?
@@ -1296,8 +1299,6 @@ if __name__ == "__main__":
                         bot.delete_message(request_message.user_id, request_message.message_id)
                     except:
                         pass
-
-            # TODO delete from db?
 
     class IRequestMessage:
 
