@@ -729,7 +729,7 @@ if __name__ == "__main__":
 
             db_connector.reconnect()
             cur = db_connector.cursor()    
-            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id} AND ((match_date > NOW()) OR (match_date = '0000-00-00 00:00:00') OR (match_date = NULL))")
+            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2 FROM goukv_ukv.jos_joomleague_matches WHERE ((matchpart1 = {team_id}) AND ((match_date > NOW()) OR (match_date = '0000-00-00 00:00:00') OR (match_date = NULL)))")
 
             matches = cur.fetchall()
             matches = list(set(matches))
@@ -748,8 +748,11 @@ if __name__ == "__main__":
                 except:
                     match_team_name_two = ''
 
+
                 match_date_time = str(match[2]).replace('-', '.')[:-3]
-                
+                if match_date_time.startswith("N"):
+                    match_date_time = ''
+
                 try:
                     cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
                     match_court_address = cur.fetchall()[0][0]
