@@ -750,8 +750,8 @@ if __name__ == "__main__":
 
                 match_date_time = str(match[2]).replace('-', '.')[:-3]
                 
-                cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
                 try:
+                    cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
                     match_court_address = cur.fetchall()[0][0]
                 except:
                     match_court_address = ""
