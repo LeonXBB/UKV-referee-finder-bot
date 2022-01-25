@@ -435,7 +435,7 @@ if __name__ == "__main__":
 
             db_connector.reconnect()
             cur = db_connector.cursor()
-            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE (match_date > NOW()) AND (referee_id = {self.referee_core_db_id} OR referee_id2 = {self.referee_core_db_id} OR referee_id3 = {self.referee_core_db_id})")
+            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2 FROM goukv_ukv.jos_joomleague_matches WHERE (match_date > NOW()) AND (referee_id = {self.referee_core_db_id} OR referee_id2 = {self.referee_core_db_id})")
             matches = cur.fetchall()
 
             for match in matches:
@@ -474,34 +474,22 @@ if __name__ == "__main__":
                 except:
                     referee_two = local["referee_not_found"]
 
-                cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {match[7]}")
-                try:
-                    res = cur.fetchall()
-                    referee_three = f"{res[0][0]}, {res[0][1]}"                
-                except:
-                    referee_three = local["referee_not_found"]
-
                 cancel_request_keyboard = None
 
                 ref_ind = 0
 
                 if match[6] == self.referee_core_db_id:
                     i = 1
-                if match[7] == self.referee_core_db_id:
-                    i = 2
 
-                print(match[7] == self.referee_core_db_id)
-                print(match, self.referee_core_db_id, ref_ind)
                 cur.execute(f"SELECT referee_index, id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match[0]} AND referee_id = {self.referee_core_db_id} AND referee_index = {i}")
                 res = cur.fetchall()
-                print(res)
                 if len(res) > 0 and len(res[0]) > 0:
 
                     cancel_keyboard_button = types.InlineKeyboardButton(local["cancel_agreement_button"], callback_data=f"car_{i}_{res[0][1]}")
                     cancel_keyboard_layout = ((cancel_keyboard_button,),)
                     cancel_request_keyboard = types.InlineKeyboardMarkup(cancel_keyboard_layout)
                 
-                self._send_message_to_user_(local["match_template_with_referees"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_one, referee_two, referee_three), cancel_request_keyboard)
+                self._send_message_to_user_(local["match_template_with_referees"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_one, referee_two), cancel_request_keyboard)
 
             if len(matches) == 0 or len(matches[0]) == 0:
                 self._send_message_to_user_(local["no_games_yet"])
@@ -742,7 +730,7 @@ if __name__ == "__main__":
 
             db_connector.reconnect()
             cur = db_connector.cursor()    
-            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2, referee_id3 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id} AND match_date > NOW()")
+            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id} AND match_date > NOW()")
 
             matches = cur.fetchall()
             matches = list(set(matches))
@@ -783,16 +771,9 @@ if __name__ == "__main__":
                 except:
                     referee_two = local["referee_not_found"]
 
-                cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {match[7]}")
-                try:
-                    res = cur.fetchall()
-                    referee_three = f"{res[0][0]}, {res[0][1]}"                
-                except:
-                    referee_three = local["referee_not_found"]
-
                 self._send_message_to_user_(local["match_template"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address))
 
-                for i, referee in enumerate((referee_one, referee_two, referee_three)):
+                for i, referee in enumerate((referee_one, referee_two)):
 
                     ignore_keyboard = False
 
@@ -1115,7 +1096,7 @@ if __name__ == "__main__":
             current_time = int(time.time())
 
             def is_not_self():
-                return user.referee_core_db_id != self.made_by
+                return user.staff_core_db_id != self.made_by
 
             def is_referee():
                 return user.referee_core_db_id != 0
@@ -1302,6 +1283,8 @@ if __name__ == "__main__":
                         bot.delete_message(request_message.user_id, request_message.message_id)
                     except:
                         pass
+
+            # TODO delete from db?
 
     class IRequestMessage:
 
