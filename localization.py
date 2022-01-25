@@ -11,7 +11,7 @@ local = {
     "hate_referee": "😡",
     "dont_care_referee": "😒",
     "successfully_applied_changes": "Зміни успішно збережені",
-    "return_to_main_menu_text": "Натисніть, щоб повернутися до головного меню",
+    "return_to_main_menu_text": "До головного меню",
     "return_to_main_menu_button": "Повернутися",
     "match_template": "\n     <b>{}</b> - <b>{}</b>     \n   <i>{}</i>   \n   <i>{}</i>",
     "match_template_with_referees": "\n     <b>{}</b> - <b>{}</b>     \n   <i>{}</i>   \n   <i>{}</i>\nПерший суддя: {}\nДругий суддя: {}\nСеккретар: {}",
