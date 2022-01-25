@@ -1186,6 +1186,7 @@ if __name__ == "__main__":
             for user in users:
                 if int(user.staff_core_db_id) == int(self.made_by):
                     user.cancel_request()
+                    break
             
             self.status = 0
 
@@ -1211,6 +1212,7 @@ if __name__ == "__main__":
             for user in users:
                 if user.tg_id == res[0][0]:
                     user.receive_acceptance_of_a_request(self, referee_id)
+                    break
 
         def get_approved(self, referee_id):
             
@@ -1232,6 +1234,7 @@ if __name__ == "__main__":
             for user in users:
                 if user.referee_core_db_id == referee_id:
                     user.get_acceptance_approved(self.id)
+                    break
 
             for request_message in request_messages:
                 if request_message.request_id == self.id:
@@ -1245,6 +1248,7 @@ if __name__ == "__main__":
             for user in users:
                 if user.referee_core_db_id == referee_id:
                     user.get_acceptance_declined(self.id)
+                    break
 
             for request_message in request_messages:
                 if request_message.request_id == self.id:
@@ -1255,6 +1259,9 @@ if __name__ == "__main__":
 
         def get_withdrawn(self, by):
 
+            done_one = False
+            done_two = False
+
             for user in users:
                 
                 if int(user.staff_core_db_id) == int(self.made_by):
@@ -1263,11 +1270,18 @@ if __name__ == "__main__":
                     elif by == "r":
                         user.receive_withdrawal_of_acceptance_by_the_referee(self.match_id)
 
+                    done_one = True
+
                 if int(user.referee_core_db_id) == int(self.referee_id):
                     if by == "s":
                         user.receive_withdrawal_of_acceptance_by_the_staff(self.match_id)
                     elif by == "r":
                         user.withdrew_acceptance_of_request_as_referee()
+
+                    done_two = True
+                
+                if done_one and done_two:
+                    break
 
             self.status = 1
 
