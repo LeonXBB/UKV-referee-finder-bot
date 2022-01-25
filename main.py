@@ -729,7 +729,7 @@ if __name__ == "__main__":
 
             db_connector.reconnect()
             cur = db_connector.cursor()    
-            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id} AND ((match_date > NOW()) OR (match_part = '0000-00-00 00:00:00'))")
+            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id} AND ((match_date > NOW()) OR (match_date = '0000-00-00 00:00:00') OR (match_date = 0000-00-00 00:00:00) OR (match_date = NULL))")
 
             matches = cur.fetchall()
             matches = list(set(matches))
