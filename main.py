@@ -717,7 +717,7 @@ if __name__ == "__main__":
             project_teams_ids = cur.fetchall()
 
             for project_team_id in project_teams_ids:
-                cur.execute(f"SELECT team_id FROM goukv_ukv.jos_joomleague_team_joomleague WHERE id = {project_team_id[0]} AND league_id = {current_league} AND season_id = {current_season}")
+                cur.execute(f"SELECT team_id FROM goukv_ukv.jos_joomleague_team_joomleague as tj LEFT JOIN goukv_ukv.jos_joomleague as p ON tj.project_id = p.id WHERE tj.id = {project_team_id[0]} AND p.league_id = {current_league} AND p.season_id = {current_season}")
                 
                 rv.extend(cur.fetchall())
             
