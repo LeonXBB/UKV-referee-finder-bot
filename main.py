@@ -729,7 +729,7 @@ if __name__ == "__main__":
 
             db_connector.reconnect()
             cur = db_connector.cursor()    
-            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id} AND match_date > NOW()")
+            cur.execute(f"SELECT match_id, playground_id, match_date, matchpart1, matchpart2, referee_id, referee_id2 FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {team_id} AND (match_date > NOW() or match_part = '0000-00-00 00:00:00'")
 
             matches = cur.fetchall()
             matches = list(set(matches))
@@ -1125,7 +1125,7 @@ if __name__ == "__main__":
                 cur.execute(f"SELECT referee_id FROM goukv_ukv.jos_joomleague_matches WHERE matchpart1 = {home_team_id} AND match_date < NOW() ORDER BY match_date DESC LIMIT 1")
                 res = cur.fetchall()
                 last_home_match = res[0][0]
-                return last_home_match != self.referee_id
+                return last_home_match != self.referee_id # TODO only divisions!
 
             def is_not_already_send():
                 cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {self.id} AND user_id = {user.tg_id}")
