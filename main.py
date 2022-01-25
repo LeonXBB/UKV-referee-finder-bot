@@ -1,7 +1,6 @@
-import re
-from tkinter import N
 import secret
 from localization import local
+from settings import *
 
 import telebot
 from telebot import types
@@ -718,7 +717,7 @@ if __name__ == "__main__":
             project_teams_ids = cur.fetchall()
 
             for project_team_id in project_teams_ids:
-                cur.execute(f"SELECT team_id FROM goukv_ukv.jos_joomleague_team_joomleague WHERE id = {project_team_id[0]}")
+                cur.execute(f"SELECT team_id FROM goukv_ukv.jos_joomleague_team_joomleague WHERE id = {project_team_id[0]} AND league_id = {current_league} AND season_id = {current_season}")
                 
                 rv.extend(cur.fetchall())
             
