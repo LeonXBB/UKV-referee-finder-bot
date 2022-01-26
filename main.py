@@ -8,6 +8,7 @@ from telebot import types
 import mysql.connector
 import threading
 import time
+import datetime
 
 if __name__ == "__main__":
     
@@ -446,7 +447,9 @@ if __name__ == "__main__":
 
             correct_date = ".".join((day, month, year))
 
-            rv = " ".join((correct_date, correct_time))
+            day_of_week = local["days_of_week"][datetime.date(year=str(year), month=int(month), day=int(day)).weekday()]
+
+            rv = " ".join((correct_date, correct_time, f"({day_of_week})"))
 
             return rv
             
