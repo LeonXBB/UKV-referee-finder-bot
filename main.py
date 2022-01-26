@@ -426,6 +426,30 @@ if __name__ == "__main__":
                     except:
                         pass
 
+        def _format_time_(self, time_string):
+
+            if time_string.startswith("N"):
+                return ""
+
+            split_time_string = time_string.split(" ")            
+
+            date = split_time_string[0]
+            time = split_time_string[1]
+
+            correct_time = time[:-3]
+
+            date_split = date.split('-')
+            
+            year = date_split[0]
+            month = date_split[1]
+            day = date_split[2]
+
+            correct_date = ".".join((day, month, year))
+
+            rv = " ".join((correct_date, correct_time))
+
+            return rv
+            
         # /// REFEREE FUNCTIONS
 
         def view_future_games_as_referee(self):
@@ -451,7 +475,7 @@ if __name__ == "__main__":
                 except:
                     match_team_name_two = ''
 
-                match_date_time = str(match[2]).replace('-', '.')[:-3]
+                match_date_time = self._format_time_(match[2])
                 
                 cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
                 try:
@@ -534,7 +558,7 @@ if __name__ == "__main__":
 
             transfer = local["transfer_titles"][int(request.transfer)]
             
-            match_time = ":".join(str(match_info[3]).split(':')[:-1]).replace("-", ".")
+            match_time = self._format_time_(match_info[3])
 
             mess = self._send_message_to_user_(local["match_request"].format(team_name_one, team_name_two, address, match_time, role, pay, transfer), yes_no_keyboard, True, True)
 
@@ -756,10 +780,7 @@ if __name__ == "__main__":
                 except:
                     match_team_name_two = ''
 
-
-                match_date_time = str(match[2]).replace('-', '.')[:-3]
-                if match_date_time.startswith("N"):
-                    match_date_time = ''
+                match_date_time = self._format_time_(match[2])
 
                 try:
                     cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
@@ -960,7 +981,7 @@ if __name__ == "__main__":
                 except:
                     match_team_name_two = ''
 
-                match_date_time = str(match[2]).replace('-', '.')[:-3]
+                match_date_time = self._format_time_(match[2])
                 
                 try:
                     cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
