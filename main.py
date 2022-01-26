@@ -516,9 +516,10 @@ if __name__ == "__main__":
             res = cur.fetchall()
             team_name_two = res[0][0]
 
+            playground_id = match_info[2]
             if type(match_info[2]) != int:
-                match_info[2] = 0
-                
+                playground_id = 0
+
             cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_playgrounds WHERE id = {match_info[2]}")
             res = cur.fetchall()
             address = res[0][0]
