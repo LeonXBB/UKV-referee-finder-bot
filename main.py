@@ -429,6 +429,8 @@ if __name__ == "__main__":
 
         def _format_time_(self, time_string):
 
+            time_string = str(time_string)
+
             if time_string.startswith("N"):
                 return ""
 
@@ -447,7 +449,7 @@ if __name__ == "__main__":
 
             correct_date = ".".join((day, month, year))
 
-            day_of_week = local["days_of_week"][datetime.date(year=str(year), month=int(month), day=int(day)).weekday()]
+            day_of_week = local["days_of_week"][datetime.date(year=int(year), month=int(month), day=int(day)).weekday()]
 
             rv = " ".join((correct_date, correct_time, f"({day_of_week})"))
 
