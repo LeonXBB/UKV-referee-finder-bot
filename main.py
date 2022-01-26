@@ -522,7 +522,11 @@ if __name__ == "__main__":
 
             cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_playgrounds WHERE id = {playground_id}")
             res = cur.fetchall()
-            address = res[0][0]
+            
+            try:
+                address = res[0][0]
+            except:
+                address = ""
 
             role = local["referee_titles_empty"][int(request.referee_index)]
 
