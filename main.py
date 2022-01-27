@@ -463,7 +463,7 @@ if __name__ == "__main__":
                 print(request.id, request_id)
                 if int(request.id) == int(request_id):
                     
-                    referee_index = "" if request.referee_index == 0 else "1"
+                    referee_index = "" if request.referee_index == 0 else "2"
 
                     db_connector.reconnect()
                     cur = db_connector.cursor()
