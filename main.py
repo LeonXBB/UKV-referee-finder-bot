@@ -460,7 +460,7 @@ if __name__ == "__main__":
             rv = {"team_one_name": "", "team_two_name": "", "date_time": "", "playground_address": "", "referee_name": "", "min_category": "", "transfer": "", "pay": ""}
 
             for request in requests:
-                print(request.id, request_id)
+
                 if int(request.id) == int(request_id):
                     
                     referee_index = "" if request.referee_index == 0 else "2"
