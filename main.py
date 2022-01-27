@@ -496,13 +496,13 @@ if __name__ == "__main__":
                         rv["referee_name"] = cur.fetchall()[0][0]
 
                     if include_min_category:                        
-                        rv["min_category"] = local["categories_titles"][request.category_min]
+                        rv["min_category"] = local["categories_titles"][int(request.category_min)]
 
                     if include_transfer:
-                        rv["transfer"] = local["transfer_titles"][request.transfer]
+                        rv["transfer"] = local["transfer_titles"][int(request.transfer)]
 
                     if include_pay:
-                        rv["pay"] = local["pay_titles"][request.pay]
+                        rv["pay"] = local["pay_titles"][int(request.pay)]
 
             return rv
         
@@ -877,7 +877,7 @@ if __name__ == "__main__":
                     if referee == local["referee_not_found"]:
                         db_connector.reconnect()
                         cur = db_connector.cursor()
-                        cur.execute(f"SELECT status, id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match[0]} AND referee_index = {i}")
+                        cur.execute(f"SELECT status, id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match[0]} AND made_by = {self.staff_core_db_id} AND referee_index = {i}")
                         res = cur.fetchall()
                         if len(res) != 0 and res[0][0] != 10 and res[0][0] != 0:
                             
