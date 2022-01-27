@@ -455,7 +455,7 @@ if __name__ == "__main__":
 
             return rv
         
-        def _get_request_details_(self, request_id, include_team_one=False, include_team_two=False, include_datetime=False, include_address=False, include_referee_name=False, include_min_catrgory=False, include_transfer=False, include_pay=False):
+        def _get_request_details_(self, request_id, include_team_one=False, include_team_two=False, include_datetime=False, include_address=False, include_referee_name=False, include_min_category=False, include_transfer=False, include_pay=False):
             
             rv = {}
 
@@ -493,7 +493,7 @@ if __name__ == "__main__":
                         cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {match_info[4]}")
                         rv["referee_name"] = cur.fetchall()[0][0]
 
-                    if include_min_catrgory:                        
+                    if include_min_category:                        
                         rv["min_category"] = local["categories_titles"][request.category_min]
 
                     if include_transfer:
@@ -874,6 +874,10 @@ if __name__ == "__main__":
                         cur.execute(f"SELECT status, id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match[0]} AND referee_index = {i}")
                         res = cur.fetchall()
                         if len(res) != 0 and res[0][0] != 10 and res[0][0] != 0:
+                            
+                            request_data = self._get_request_details_(res[0][0], include_transfer=True, include_pay=True)
+                            text += local["request_details"].format(request_data["transfer"], request_data["pay"])
+                            
                             button = types.InlineKeyboardButton(local["cancel_request_button"], callback_data=f"cr_{i}_{res[0][1]}")
                         else:
                             button = types.InlineKeyboardButton(local["look_for_referee_button"], callback_data=f"lfr_{i}_{match[0]}")
@@ -883,10 +887,6 @@ if __name__ == "__main__":
                         cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match[0]} AND made_by = {self.staff_core_db_id} AND referee_index = {i}")
                         res = cur.fetchall()
                         if len(res) > 0 and len(res[0]) > 0:
-
-                            request_data = self._get_request_details_(res[0][0], include_transfer=True, include_pay=True)
-                            text += local["request_details"].format(request_data["transfer"], request_data["pay"])
-                            
                             button = types.InlineKeyboardButton(local["cancel_agreement_button"], callback_data=f"cas_{i}_{res[0][0]}")
                         else:
                             ignore_keyboard = True
