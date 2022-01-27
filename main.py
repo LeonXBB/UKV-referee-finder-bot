@@ -1,3 +1,4 @@
+from wsgiref.util import request_uri
 import secret
 from localization import local
 from settings import *
@@ -692,55 +693,59 @@ if __name__ == "__main__":
             self._send_message_to_user_(local["agreement_cancelled"], clear_previous=True)
             self._send_return_to_the_main_menu_keyboard_()
         
-        def get_acceptance_declined(self, request_id):
-            
-            for request_message in request_messages:
-                    if (request_message.type == 1 or request_message.type == 9) and request_message.user_id == self.tg_id:
-                        try:
-                            bot.delete_message(self.tg_id, request_message.message_id)
-                        except:
-                            pass
+        # delete related messages, get home team name, put it into the message and send
 
-            match_id = 0
+        #def get_acceptance_declined(self, request_id):
+        #    
+        #    for request_message in request_messages:
+        #            if (request_message.type == 1 or request_message.type == 9) and request_message.user_id == self.tg_id:
+        #                try:
+        #                    bot.delete_message(self.tg_id, request_message.message_id)
+        #                except:
+        #                    pass
+        #
+        #    match_id = 0
+        #
+        #    for request in requests:
+        #        if request.id == request_id:
+        #            match_id = request.match_id
+        #
+        #    db_connector.reconnect()
+        #    cur = db_connector.cursor()
+        #    cur.execute(f"SELECT matchpart1 FROM goukv_ukv.jos_joomleague_matches WHERE match_id = {match_id}")
+        #    res = cur.fetchall()[0][0]
+        #    cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {res}")
+        #    team_name = cur.fetchall()[0][0]
+        #
+        #    self._send_message_to_user_(local["final_acceptance_declined"].format(team_name))
+        #    self._send_return_to_the_main_menu_keyboard_()
 
-            for request in requests:
-                if request.id == request_id:
-                    match_id = request.match_id
+        # delete related messages, get home team name, put it into the message and send
 
-            db_connector.reconnect()
-            cur = db_connector.cursor()
-            cur.execute(f"SELECT matchpart1 FROM goukv_ukv.jos_joomleague_matches WHERE match_id = {match_id}")
-            res = cur.fetchall()[0][0]
-            cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {res}")
-            team_name = cur.fetchall()[0][0]
-
-            self._send_message_to_user_(local["final_acceptance_declined"].format(team_name))
-            self._send_return_to_the_main_menu_keyboard_()
-
-        def get_acceptance_approved(self, request_id):
-
-            for request_message in request_messages:
-                if request_message.type == 1 and request_message.user_id == self.tg_id:
-                    try:
-                        bot.delete_message(self.tg_id, request_message.message_id)
-                    except:
-                        pass
-
-            match_id = 0
-
-            for request in requests:
-                if request.id == request_id:
-                    match_id = request.match_id
-
-            db_connector.reconnect()
-            cur = db_connector.cursor()
-            cur.execute(f"SELECT matchpart1 FROM goukv_ukv.jos_joomleague_matches WHERE match_id = {match_id}")
-            res = cur.fetchall()[0][0]
-            cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {res}")
-            team_name = cur.fetchall()[0][0]
-
-            self._send_message_to_user_(local["final_acceptance_referee"].format(team_name))
-            self._send_return_to_the_main_menu_keyboard_()
+        #def get_acceptance_approved(self, request_id):
+        #
+        #    for request_message in request_messages:
+        #        if request_message.type == 1 and request_message.user_id == self.tg_id:
+        #            try:
+        #                bot.delete_message(self.tg_id, request_message.message_id)
+        #            except:
+        #                pass
+        #
+        #    match_id = 0
+        #
+        #    for request in requests:
+        #        if request.id == request_id:
+        #            match_id = request.match_id
+        #
+        #    db_connector.reconnect()
+        #    cur = db_connector.cursor()
+        #    cur.execute(f"SELECT matchpart1 FROM goukv_ukv.jos_joomleague_matches WHERE match_id = {match_id}")
+        #    res = cur.fetchall()[0][0]
+        #    cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {res}")
+        #    team_name = cur.fetchall()[0][0]
+        #
+        #    self._send_message_to_user_(local["final_acceptance_referee"].format(team_name))
+        #    self._send_return_to_the_main_menu_keyboard_()
 
         def receive_withdrawal_of_acceptance_by_the_staff(self, match_id):
             
@@ -1054,13 +1059,14 @@ if __name__ == "__main__":
                 except:
                     match_court_address = ""            
 
-            approve = types.InlineKeyboardButton(local["agree_to_request"], callback_data=f"s_req_agree_{request.id}")
-            decline = types.InlineKeyboardButton(local["deny_request"], callback_data=f"s_req_deny_{request.id}")
+            #approve = types.InlineKeyboardButton(local["agree_to_request"], callback_data=f"s_req_agree_{request.id}")
+            #decline = types.InlineKeyboardButton(local["deny_request"], callback_data=f"s_req_deny_{request.id}")
 
-            keyboard_layout = ((approve, decline),)
-            keyboard_obj = types.InlineKeyboardMarkup(keyboard_layout)
+            #keyboard_layout = ((approve, decline),)
+            #keyboard_obj = types.InlineKeyboardMarkup(keyboard_layout)
 
-            mess = self._send_message_to_user_(local["received_acceptance_of_the_request"].format(referee_name, match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_title), keyboard_obj, return_message=True)
+            #mess = self._send_message_to_user_(local["received_acceptance_of_the_request"].format(referee_name, match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_title), keyboard_obj, return_message=True)
+            mess = self._send_message_to_user_(local["received_acceptance_of_the_request"].format(referee_name, match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_title), return_message=True)
 
             db_connector.reconnect()
             cur = db_connector.cursor()
@@ -1078,28 +1084,40 @@ if __name__ == "__main__":
                 "type": 2
             }))
 
-        def accept_acceptance_of_a_request(self, request_id, referee_id):
-            
-            for request in requests:
-                if int(request.id) == int(request_id):
-                    request.get_approved(referee_id)
-
-            self._send_message_to_user_(local["final_acceptance_staff"])
-            self._send_return_to_the_main_menu_keyboard_()
-
-        def decline_acceptance_of_a_request(self, request_id, referee_id):
-            
-            for request in requests:
-                if int(request.id) == int(request_id):
-                    request.get_declined(referee_id) 
-                if request.id == request_id and request.referee_id == referee_id: # TODO ???
-                    request.decision = 0
-
-            db_connector.reconnect()
-            cur = db_connector.cursor()
-            cur.execute(f"UPDATE goukv_ukv.referee_bot_request_messages SET decision = 0 WHERE id = {request_id} AND user_id = {self.tg_id}")
+            request.status = 2
+            cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET status = 2 WHERE id = {request.id}")
 
             self._send_return_to_the_main_menu_keyboard_()
+            #for request_ in requests:
+            #    if int(request.id) == int(request.id): # this is necessary, I promise
+                    
+
+        # call request obj method and notify self
+
+        #def accept_acceptance_of_a_request(self, request_id, referee_id):
+        #    
+        #    for request in requests:
+        #        if int(request.id) == int(request_id):
+        #            request.get_approved(referee_id)
+        #
+        #    self._send_message_to_user_(local["final_acceptance_staff"])
+        #    self._send_return_to_the_main_menu_keyboard_()
+
+        # call request obj method and change messages' decision both in bot and in db
+
+        #def decline_acceptance_of_a_request(self, request_id, referee_id):
+        #    
+        #    for request in requests:
+        #        if int(request.id) == int(request_id):
+        #            request.get_declined(referee_id) 
+        #        if request.id == request_id and request.referee_id == referee_id: # TODO ???
+        #            request.decision = 0
+        #
+        #    db_connector.reconnect()
+        #    cur = db_connector.cursor()
+        #    cur.execute(f"UPDATE goukv_ukv.referee_bot_request_messages SET decision = 0 WHERE id = {request_id} AND user_id = {self.tg_id}")
+        #
+        #    self._send_return_to_the_main_menu_keyboard_()
 
         def withdraw_acceptance_of_request_as_staff(self):
 
@@ -1311,6 +1329,8 @@ if __name__ == "__main__":
                     user.receive_acceptance_of_a_request(self, referee_id)
                     break
 
+            self.get_approved(referee_id) # due to changes in the architecture
+
         def get_approved(self, referee_id):
             
             i = ""
@@ -1328,31 +1348,33 @@ if __name__ == "__main__":
             cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET status = 3 WHERE id = {self.id}")
             self.status = 3
 
-            for user in users:
-                if user.referee_core_db_id == referee_id:
-                    user.get_acceptance_approved(self.id)
-                    break
+            #for user in users:
+            #    if user.referee_core_db_id == referee_id:
+            #        user.get_acceptance_approved(self.id)
+            #        break
 
             for request_message in request_messages:
-                if request_message.request_id == self.id:
+                if request_message.request_id == self.id and request_message.type != 2 and request_message.type != "2":
                     try:
                         bot.delete_message(request_message.user_id, request_message.message_id)
                     except:
                         pass
 
-        def get_declined(self, referee_id):
-            
-            for user in users:
-                if user.referee_core_db_id == referee_id:
-                    user.get_acceptance_declined(self.id)
-                    break
-
-            for request_message in request_messages:
-                if request_message.request_id == self.id:
-                    try:
-                        bot.delete_message(request_message.user_id, request_message.message_id)
-                    except:
-                        pass
+        # call user's obj method and delete related messages
+        
+        #def get_declined(self, referee_id):
+        #    
+        #    for user in users:
+        #        if user.referee_core_db_id == referee_id:
+        #            user.get_acceptance_declined(self.id)
+        #            break
+        #
+        #    for request_message in request_messages:
+        #        if request_message.request_id == self.id:
+        #            try:
+        #                bot.delete_message(request_message.user_id, request_message.message_id)
+        #            except:
+        #                pass
 
         def get_withdrawn(self, by):
 
