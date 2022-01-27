@@ -457,10 +457,10 @@ if __name__ == "__main__":
         
         def _get_request_details_(self, request_id, include_team_one=False, include_team_two=False, include_datetime=False, include_address=False, include_referee_name=False, include_min_category=False, include_transfer=False, include_pay=False):
             
-            rv = {}
+            rv = {"team_one_name": "", "team_two_name": "", "date_time": "", "playground_address": "", "referee_name": "", "min_category": "", "transfer": "", "pay": ""}
 
             for request in requests:
-                if request.id == request_id:
+                if int(request.id) == int(request_id):
                     
                     referee_index = "" if request.referee_index == 0 else "1"
 
@@ -478,10 +478,10 @@ if __name__ == "__main__":
                     if include_team_two:
 
                         cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {match_info[1]}")
-                        rv["team_one_name"] = cur.fetchall()[0][0]
+                        rv["team_two_name"] = cur.fetchall()[0][0]
 
                     if include_datetime:
-                        rv["team_one_name"] = self._format_time_(match_info[2])
+                        rv["date_time"] = self._format_time_(match_info[2])
 
                     if include_address:
                         
@@ -877,7 +877,7 @@ if __name__ == "__main__":
                             
                             request_data = self._get_request_details_(res[0][0], include_transfer=True, include_pay=True)
                             text += local["request_details"].format(request_data["transfer"], request_data["pay"])
-                            
+
                             button = types.InlineKeyboardButton(local["cancel_request_button"], callback_data=f"cr_{i}_{res[0][1]}")
                         else:
                             button = types.InlineKeyboardButton(local["look_for_referee_button"], callback_data=f"lfr_{i}_{match[0]}")
