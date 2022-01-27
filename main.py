@@ -460,6 +460,7 @@ if __name__ == "__main__":
             rv = {"team_one_name": "", "team_two_name": "", "date_time": "", "playground_address": "", "referee_name": "", "min_category": "", "transfer": "", "pay": ""}
 
             for request in requests:
+                print(request.id, request_id)
                 if int(request.id) == int(request_id):
                     
                     referee_index = "" if request.referee_index == 0 else "1"
@@ -563,9 +564,9 @@ if __name__ == "__main__":
                 res = cur.fetchall()
                 if len(res) > 0 and len(res[0]) > 0:
 
-                    request_data = self._get_request_details_(res[0][1], include_transfer=True, include_pay=True)
+                    request_data = self._get_request_details_(res[0][1], include_min_category=True include_transfer=True, include_pay=True)
 
-                    text += local["request_details"].format(request_data["transfer"], request_data["pay"])
+                    text += local["request_details"].format(request_data["min_category"], request_data["transfer"], request_data["pay"])
 
                     cancel_keyboard_button = types.InlineKeyboardButton(local["cancel_agreement_button"], callback_data=f"car_{i}_{res[0][1]}")
                     cancel_keyboard_layout = ((cancel_keyboard_button,),)
@@ -875,8 +876,8 @@ if __name__ == "__main__":
                         res = cur.fetchall()
                         if len(res) != 0 and res[0][0] != 10 and res[0][0] != 0:
                             
-                            request_data = self._get_request_details_(res[0][0], include_transfer=True, include_pay=True)
-                            text += local["request_details"].format(request_data["transfer"], request_data["pay"])
+                            request_data = self._get_request_details_(res[0][0], include_min_category=True, include_transfer=True, include_pay=True)
+                            text += local["request_details"].format(request_data["min_category"], request_data["transfer"], request_data["pay"])
 
                             button = types.InlineKeyboardButton(local["cancel_request_button"], callback_data=f"cr_{i}_{res[0][1]}")
                         else:
