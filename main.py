@@ -564,7 +564,7 @@ if __name__ == "__main__":
                 res = cur.fetchall()
                 if len(res) > 0 and len(res[0]) > 0:
 
-                    request_data = self._get_request_details_(res[0][1], include_min_category=True include_transfer=True, include_pay=True)
+                    request_data = self._get_request_details_(res[0][1], include_min_category=True, include_transfer=True, include_pay=True)
 
                     text += local["request_details"].format(request_data["min_category"], request_data["transfer"], request_data["pay"])
 
