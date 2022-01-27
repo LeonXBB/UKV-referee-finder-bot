@@ -15,6 +15,7 @@ local = {
     "return_to_main_menu_button": "Повернутися",
     "match_template": "\n     <b>{}</b> - <b>{}</b>     \n   <i>{}</i>   \n   <i>{}</i>",
     "match_template_with_referees": "\n     <b>{}</b> - <b>{}</b>     \n   <i>{}</i>   \n   <i>{}</i>\nПерший суддя: {}\nДругий суддя: {}",
+    "match_template_with_referees_and_request": "\n     <b>{}</b> - <b>{}</b>     \n   <i>{}</i>   \n   <i>{}</i>\nПерший суддя: {}\nДругий суддя: {}.\nІнформація щодо запиту: \nТрансфер:{}\nГонорар: {}",
     "referee_not_found": "???",
     "referees_titles": ("Перший суддя: {}", "Другий суддя: {}"),
     "referee_titles_empty": ("Перший суддя", "Другий суддя"),
@@ -42,5 +43,6 @@ local = {
     "agreement_cancelled": "Домовленність скасовано.",
     "agreement_cancelled_by_referee": "Ваша домовленність щодо матчу {} - {} була скасована рефері.",
     "agreement_cancelled_by_staff": "Ваша домовленність була скасована представником команди {}",
-    "days_of_week": ("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд")
+    "days_of_week": ("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"),
+    "request_details": "\n\nДеталі запиту:\Трансфер: {}\nГонорар: {}"
 }

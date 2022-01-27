@@ -454,7 +454,56 @@ if __name__ == "__main__":
             rv = " ".join((correct_date, correct_time, f"({day_of_week})"))
 
             return rv
+        
+        def _get_request_details_(self, request_id, include_team_one=False, include_team_two=False, include_datetime=False, include_address=False, include_referee_name=False, include_min_catrgory=False, include_transfer=False, include_pay=False):
             
+            rv = {}
+
+            for request in requests:
+                if request.id == request_id:
+                    
+                    referee_index = "" if request.referee_index == 0 else "1"
+
+                    db_connector.reconnect()
+                    cur = db_connector.cursor()
+                    cur.execute(f"SELECT matchpart1, matchpart2, match_date, playground_id, referee_id{referee_index} FROM goukv_ukv.jos_joomleague_matches WHERE match_id = {request.match_id}")
+
+                    match_info = cur.fetchall()[0]
+
+                    if include_team_one:
+                        
+                        cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {match_info[0]}")
+                        rv["team_one_name"] = cur.fetchall()[0][0]
+
+                    if include_team_two:
+
+                        cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_teams WHERE id = {match_info[1]}")
+                        rv["team_one_name"] = cur.fetchall()[0][0]
+
+                    if include_datetime:
+                        rv["team_one_name"] = self._format_time_(match_info[2])
+
+                    if include_address:
+                        
+                        cur.execute(f"SELECT name FROM goukv_ukv.jos_joomleague_playgrounds WHERE id = {match_info[3]}")
+                        rv["playground_address"] = cur.fetchall()[0][0]
+
+                    if include_referee_name:
+                        
+                        cur.execute(f"SELECT lastname, firstname FROM goukv_ukv.jos_joomleague_referees WHERE id = {match_info[4]}")
+                        rv["referee_name"] = cur.fetchall()[0][0]
+
+                    if include_min_catrgory:                        
+                        rv["min_category"] = local["categories_titles"][request.category_min]
+
+                    if include_transfer:
+                        rv["transfer"] = local["transfer_titles"][request.transfer]
+
+                    if include_pay:
+                        rv["pay"] = local["pay_titles"][request.pay]
+
+            return rv
+        
         # /// REFEREE FUNCTIONS
 
         def view_future_games_as_referee(self):
@@ -503,6 +552,7 @@ if __name__ == "__main__":
                     referee_two = local["referee_not_found"]
 
                 cancel_request_keyboard = None
+                text = local["match_template_with_referees"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_one, referee_two)
 
                 ref_ind = 0
 
@@ -513,11 +563,15 @@ if __name__ == "__main__":
                 res = cur.fetchall()
                 if len(res) > 0 and len(res[0]) > 0:
 
+                    request_data = self._get_request_details_(res[0][1], include_transfer=True, include_pay=True)
+
+                    text += local["request_details"].format(request_data["transfer"], request_data["pay"])
+
                     cancel_keyboard_button = types.InlineKeyboardButton(local["cancel_agreement_button"], callback_data=f"car_{i}_{res[0][1]}")
                     cancel_keyboard_layout = ((cancel_keyboard_button,),)
                     cancel_request_keyboard = types.InlineKeyboardMarkup(cancel_keyboard_layout)
                 
-                self._send_message_to_user_(local["match_template_with_referees"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_one, referee_two), cancel_request_keyboard)
+                self._send_message_to_user_(text, cancel_request_keyboard)
 
             if len(matches) == 0 or len(matches[0]) == 0:
                 self._send_message_to_user_(local["no_games_yet"])
@@ -811,6 +865,7 @@ if __name__ == "__main__":
 
                 for i, referee in enumerate((referee_one, referee_two)):
 
+                    text = local["referees_titles"][i].format(referee)
                     ignore_keyboard = False
 
                     if referee == local["referee_not_found"]:
@@ -828,6 +883,10 @@ if __name__ == "__main__":
                         cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_requests WHERE match_id = {match[0]} AND made_by = {self.staff_core_db_id} AND referee_index = {i}")
                         res = cur.fetchall()
                         if len(res) > 0 and len(res[0]) > 0:
+
+                            request_data = self._get_request_details_(res[0][0], include_transfer=True, include_pay=True)
+                            text += local["request_details"].format(request_data["transfer"], request_data["pay"])
+                            
                             button = types.InlineKeyboardButton(local["cancel_agreement_button"], callback_data=f"cas_{i}_{res[0][0]}")
                         else:
                             ignore_keyboard = True
@@ -837,7 +896,7 @@ if __name__ == "__main__":
                     else:
                         keyboard_obj = None
 
-                    self._send_message_to_user_(local["referees_titles"][i].format(referee), keyboard_obj)
+                    self._send_message_to_user_(text, keyboard_obj)
 
             if len(matches) == 0 or len(matches[0]) == 0:
                 self._send_message_to_user_(local["no_games_yet"])
