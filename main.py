@@ -679,7 +679,7 @@ if __name__ == "__main__":
 
                 request_messages.append(IRequestMessage({
                     "id": res_one[0][0],
-                    "request_id": self.id,
+                    "request_id": request_id,
                     "user_id": self.tg_id,
                     "message_id": mess.id,
                     "decision": 1,
@@ -688,7 +688,7 @@ if __name__ == "__main__":
 
                 request_messages.append(IRequestMessage({
                     "id": res_two[0][0],
-                    "request_id": self.id,
+                    "request_id": request_id,
                     "user_id": self.tg_id,
                     "message_id": menu_mess.id,
                     "decision": 1,
