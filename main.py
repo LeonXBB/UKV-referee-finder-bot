@@ -12,7 +12,7 @@ import datetime
 
 if __name__ == "__main__":
     
-    global db_connector, users, referees, team_reps, games, requests, request_messages
+    global db_connector, users, games, requests, request_messages
 
     bot = telebot.TeleBot(secret.tg_bot_key)
 
@@ -549,8 +549,8 @@ if __name__ == "__main__":
 
                 match_date_time = self._format_time_(match[2])
                 
-                cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
                 try:
+                    cur.execute(f"SELECT name from goukv_ukv.jos_joomleague_playgrounds WHERE id = {match[1]}")
                     match_court_address = cur.fetchall()[0][0]
                 except:
                     match_court_address = ""
