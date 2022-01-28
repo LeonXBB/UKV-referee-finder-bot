@@ -666,7 +666,7 @@ if __name__ == "__main__":
                 res_one = cur.fetchall()
 
                 cur.execute(f"INSERT INTO `goukv_ukv`.`referee_bot_request_messages` (`request_id`, `user_id`, `message_id`, `decision`, `type`) VALUES ({request_id}, {self.tg_id}, {menu_mess.id}, 1, 9)")
-                cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {self.id} AND user_id = {self.tg_id} AND message_id = {menu_mess.id}")
+                cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {request_id} AND user_id = {self.tg_id} AND message_id = {menu_mess.id}")
                 res_two = cur.fetchall()
 
             def update_bot_lists():
