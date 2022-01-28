@@ -195,9 +195,6 @@ if __name__ == "__main__":
                 #0208
                 if command_id == "D0":
                     self.show_main_menu()
-                #
-                if command_id == "":
-                    bot.
 
         def _send_message_to_user_(self, message, keyboard=None, clear_previous=False, return_message=False, parse_mode="html"):
             
