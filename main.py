@@ -1346,8 +1346,8 @@ if __name__ == "__main__":
             cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET referee_id = {referee_id} WHERE id = {self.id}")
             self.referee_id = referee_id
 
-            cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET status = 3 WHERE id = {self.id}")
-            self.status = 3
+            cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET status = 2 WHERE id = {self.id}")
+            self.status = 2
 
             #for user in users:
             #    if user.referee_core_db_id == referee_id:
