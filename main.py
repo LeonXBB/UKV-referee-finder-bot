@@ -640,7 +640,7 @@ if __name__ == "__main__":
         def accept_request(self, request_id):
 
             for request in requests:
-                if int(request.id) == int(request_id) and request.status != 3 and request.status != 0 and request.status != "3" and request.status != "0":
+                if int(request.id) == int(request_id) and request.status != 2 and request.status != 0 and request.status != "2" and request.status != "0":
                     request.get_accepted(self.referee_core_db_id)
                     mess = self._send_message_to_user_(local["thank you"], return_message=True)
 
@@ -1210,7 +1210,8 @@ if __name__ == "__main__":
             current_time = int(time.time())
 
             def is_not_self():
-                return int(user.staff_core_db_id) != int(self.made_by)
+                return True
+                #return int(user.staff_core_db_id) != int(self.made_by)
 
             def is_referee():
                 return user.referee_core_db_id != 0
@@ -1501,7 +1502,7 @@ if __name__ == "__main__":
         while True:
             time.sleep(20)
             for request in requests:
-                if request.status != 0 and request.status != 3 and request.status != "0" and request.status != "3":
+                if request.status != 0 and request.status != 2 and request.status != "0" and request.status != "2":
                     request.get_sent()
 
     t1 = threading.Thread(target=run_bot)
