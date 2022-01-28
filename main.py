@@ -1312,7 +1312,7 @@ if __name__ == "__main__":
                 cur.execute(f"UPDATE goukv_ukv.jos_joomleague_matches SET referee_id{i} = {referee_id} WHERE match_id = {self.match_id}")
                 cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET referee_id = {referee_id} WHERE id = {self.id}")
                 cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET status = 2 WHERE id = {self.id}")
-                cur.execute(f"UPDATE goukv_ukv.referee_bot_request_message SET decision = 2 WHERE request_id = {self.id}")
+                cur.execute(f"UPDATE goukv_ukv.referee_bot_request_messages SET decision = 2 WHERE request_id = {self.id}")
 
             def update_bot_lists():
             
