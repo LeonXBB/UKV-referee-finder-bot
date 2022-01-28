@@ -695,16 +695,6 @@ if __name__ == "__main__":
                     "type": 9
                 }))
 
-            def try_deleting_messages():
-                
-                for request_message in request_messages:
-                    if request_message.request_id == request_id and request_message.type != 2 and request_message.type != "2" and request_message.type != 9 and request_message.type != "9":
-
-                        try:
-                            bot.delete_message(request_message.user_id, request_message.message_id)
-                        except:
-                            pass
-
             def send_messages():
 
                 global mess, menu_mess
@@ -720,8 +710,6 @@ if __name__ == "__main__":
             request = find_correct_obj()
             request.get_accepted(self.tg_id, self.referee_core_db_id, mess, menu_mess)
             
-            try_deleting_messages()                        
-
         def deny_request(self, request_id):
 
             def find_correct_obj():
@@ -1074,25 +1062,6 @@ if __name__ == "__main__":
 
             mess = self._send_message_to_user_(local["received_acceptance_of_the_request"].format(referee_name, match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_title), return_message=True)
 
-            db_connector.reconnect()
-            cur = db_connector.cursor()
-            cur.execute(f"INSERT INTO `goukv_ukv`.`referee_bot_request_messages` (`request_id`, `user_id`, `message_id`, `decision`, `type`) VALUES ({request.id}, {self.tg_id}, {mess.id}, 1, 2)")
-
-            cur.execute(f"SELECT id FROM goukv_ukv.referee_bot_request_messages WHERE request_id = {request.id} AND user_id = {self.tg_id} AND message_id = {mess.id}")
-            res = cur.fetchall()
-
-            request_messages.append(IRequestMessage({
-                "id": res[0][0],
-                "request_id": request.id,
-                "user_id": self.tg_id,
-                "message_id": mess.id,
-                "decision": 1,
-                "type": 2
-            }))
-
-            request.status = 2
-            cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET status = 2 WHERE id = {request.id}")
-
             self._send_return_to_the_main_menu_keyboard_()
             
         def withdraw_acceptance_of_request_as_staff(self):
@@ -1337,9 +1306,20 @@ if __name__ == "__main__":
 
                 return i
 
+            def try_deleting_messages():
+                
+                for request_message in request_messages:
+                    if request_message.request_id == self.id:
+
+                        try:
+                            bot.delete_message(request_message.user_id, request_message.message_id)
+                        except:
+                            pass
+
             i = get_referee_index()
             update_db()
             update_bot_lists() 
+            try_deleting_messages()
 
         def get_withdrawn(self, by):
 
