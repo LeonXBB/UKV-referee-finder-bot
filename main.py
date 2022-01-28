@@ -111,21 +111,27 @@ if __name__ == "__main__":
 
             elif callback_data.startswith("cr"):
                 
-                referee_index = callback_data.split("_")[1]
                 request_id = callback_data.split("_")[2]
 
                 for request in requests:
-                    request.get_cancelled()
+                    if request_id == request.id:
+                        request.get_cancelled()
 
             elif callback_data.startswith("cas"):
                 
+                request_id = callback_data.split("_")[1]
+
                 for request in requests:
-                    request.get_withdrawn('s')
+                    if request_id == request.id:
+                        request.get_withdrawn('s')
 
             elif callback_data.startswith("car"):
 
+                request_id = callback_data.split("_")[1]
+
                 for request in requests:
-                    request.get_withdrawn('r')
+                    if request_id == request.id:
+                        request.get_withdrawn('r')
 
             elif callback_data.startswith("rrc"):
                 self.forming_request = callback_data.split("_")[1] + self.forming_request[1:]
