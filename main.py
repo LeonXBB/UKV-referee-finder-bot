@@ -729,13 +729,13 @@ if __name__ == "__main__":
                 
                 db_connector.reconnect()
                 cur = db_connector.cursor()
-                cur.execute(f"UPDATE goukv_ukv.referee_bot_request_messages SET status = 0 WHERE request_id = {request_id} AND user_id = {self.tg_id}")
+                cur.execute(f"UPDATE goukv_ukv.referee_bot_request_messages SET decision = 0 WHERE request_id = {request_id} AND user_id = {self.tg_id}")
 
             def update_bot_lists():
                 
                 for request_message in request_messages:
                     if request_message.request_id == request_id:
-                        request_message.status = 0
+                        request_message.decision = 0
 
             request = find_correct_obj()
             request.get_denied(self.referee_core_db_id)
