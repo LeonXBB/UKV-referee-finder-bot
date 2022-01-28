@@ -1312,7 +1312,7 @@ if __name__ == "__main__":
                 cur.execute(f"UPDATE goukv_ukv.jos_joomleague_matches SET referee_id{i} = {referee_id} WHERE match_id = {self.match_id}")
                 cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET referee_id = {referee_id} WHERE id = {self.id}")
                 cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET status = 2 WHERE id = {self.id}")
-                cur.execute(f"UPDATE goukv_ukv.referee_bot_requests SET decision = 2 WHERE id = {self.id}")
+                cur.execute(f"UPDATE goukv_ukv.referee_bot_request_message SET decision = 2 WHERE request_id = {self.id}")
 
             def update_bot_lists():
             
@@ -1320,6 +1320,10 @@ if __name__ == "__main__":
                     if user.tg_id == res_three[0][0]:
                         user.receive_acceptance_of_a_request(self, referee_id)
                         break
+
+                for request_message in request_messages:
+                    if request_message.request_id == self.id:
+                        request_message.decision = 2
 
                 self.referee_id = referee_id
                 self.status = 2
