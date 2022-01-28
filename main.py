@@ -1440,7 +1440,7 @@ if __name__ == "__main__":
         else:
             
             for user in users:
-                if user.tg_id == message.text.split("_")[1]:
+                if user.tg_id == int(message.text.split("_")[1]):
                     user._execute_command_(message.text.split("_")[2:])
     
     @bot.callback_query_handler(func=lambda call:True)
