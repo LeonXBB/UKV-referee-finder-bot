@@ -721,6 +721,7 @@ if __name__ == "__main__":
             def find_correct_obj():
                 
                 for request in requests:
+                    print(request.id, request.status)
                     if int(request.id) == int(request_id) and (request.status == 1 or request.status == "1"):
                         return request
             
