@@ -1299,10 +1299,10 @@ if __name__ == "__main__":
 
             def get_referee_index():
 
-                i = 0
+                i = ""
 
                 if int(self.referee_index) > 0:
-                    i = self.referee_index + 1
+                    i = int(self.referee_index) + 1
 
                 return i
 
