@@ -119,18 +119,18 @@ if __name__ == "__main__":
 
             elif callback_data.startswith("cas"):
                 
-                request_id = callback_data.split("_")[1]
+                request_id = callback_data.split("_")[2]
 
                 for request in requests:
-                    if request_id == request.id:
+                    if int(request_id == request.id):
                         request.get_withdrawn('s')
 
             elif callback_data.startswith("car"):
 
-                request_id = callback_data.split("_")[1]
+                request_id = callback_data.split("_")[2]
 
                 for request in requests:
-                    if request_id == request.id:
+                    if int(request_id) == int(request.id):
                         request.get_withdrawn('r')
 
             elif callback_data.startswith("rrc"):
