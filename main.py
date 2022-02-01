@@ -572,7 +572,8 @@ if __name__ == "__main__":
                 cancel_request_keyboard = None
                 text = local["match_template_with_referees"].format(match_team_name_one, match_team_name_two, match_date_time, match_court_address, referee_one, referee_two)
 
-                ref_ind = 0
+                #ref_ind = 0
+                i = 0
 
                 if match[6] == self.referee_core_db_id:
                     i = 1
